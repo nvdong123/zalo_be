@@ -1,15 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-from app.schemas.room import Room, RoomCreate, RoomUpdate
-from app.crud.crud_room import (
+from app.schemas.rooms import RoomRead as Room, RoomCreate, RoomUpdate
+from app.crud.crud_rooms import (
     get_rooms,
     get_room,
     create_room,
     update_room,
     delete_room,
 )
-from app.db.session import get_db
+from app.db.session_mysql import get_db
 
 router = APIRouter()
 

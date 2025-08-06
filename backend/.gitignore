@@ -1,0 +1,168 @@
+# ===================================
+# GIT IGNORE - SECURITY CRITICAL
+# ===================================
+
+# NEVER COMMIT THESE FILES - CONTAINS SENSITIVE DATA
+.env
+.env.production
+.env.local
+.env.staging
+.env.test
+*.env
+data.md
+
+# Database files and backups
+*.sql
+*.db
+*.sqlite
+*.sqlite3
+local_test.db
+backup_*.sql*
+*.dump
+
+# Logs containing sensitive information
+*.log
+logs/
+/var/log/
+app.log
+error.log
+access.log
+
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# SSH keys and certificates
+*.pem
+*.key
+*.crt
+*.cert
+*.p12
+*.pfx
+id_rsa*
+id_dsa*
+known_hosts
+authorized_keys
+
+# Configuration files with sensitive data
+config.ini
+config.json
+settings.json
+secrets.json
+credentials.json
+
+# Backup and temporary files
+*.bak
+*.backup
+*.tmp
+*.temp
+*~
+.#*
+#*#
+
+# Upload directories (may contain user data)
+uploads/
+static/uploads/
+media/uploads/
+
+# Docker secrets
+docker-compose.override.yml
+.dockerignore
+
+# Cloud and deployment configs
+.aws/
+.gcp/
+*.tfstate
+*.tfstate.backup
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Archives and compressed files (may contain sensitive data)
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Test files that might contain real data
+test_data/
+sample_data/
+mock_data/
+
+# Local development overrides
+local_settings.py
+dev_settings.py
+
+# Package manager files
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/

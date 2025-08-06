@@ -1,26 +1,26 @@
 from typing import Generator, Optional
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from sqlmodel import Session
+from sqlalchemy.orm import Session
 from jose import jwt, JWTError
 from pydantic import ValidationError
 
-from app.db.session import get_db
+from app.db.session_local import get_db
 from app.core.config import settings
-from app.models.user import User
-from app.crud.crud_user import user_crud
+from app.models.models import TblAdminUsers
+from app.crud.crud_admin_users import crud_admin_user
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/auth/login"
 )
 
 
-def get_current_user(
+def get_current_admin_user(
     db: Session = Depends(get_db), 
     token: str = Depends(oauth2_scheme)
-) -> User:
+) -> TblAdminUsers:
     """
-    Lấy thông tin user hiện tại từ JWT token
+    Get current admin user from JWT token
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -41,73 +41,83 @@ def get_current_user(
     except (JWTError, ValidationError):
         raise credentials_exception
     
-    # Lấy user từ database
-    user = user_crud.get(db, id=int(user_id))
-    if user is None:
+    # Get admin user from database
+    admin_user = crud_admin_user.get(db, id=int(user_id))
+    if admin_user is None:
         raise credentials_exception
     
-    return user
+    return admin_user
 
 
-def get_current_admin_user(
-    current_user: User = Depends(get_current_user),
-) -> User:
+def get_current_super_admin(
+    current_user: TblAdminUsers = Depends(get_current_admin_user),
+) -> TblAdminUsers:
     """
-    Kiểm tra user hiện tại có quyền admin không
+    Check if current user is super admin
     """
-    if not current_user.is_admin:
+    if current_user.role != "super_admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Không có quyền admin"
+            detail="Super admin access required"
         )
     return current_user
 
 
-def get_current_active_user(
-    current_user: User = Depends(get_current_user),
-) -> User:
+def get_current_active_admin(
+    current_user: TblAdminUsers = Depends(get_current_admin_user),
+) -> TblAdminUsers:
     """
-    Kiểm tra user hiện tại có active không
+    Check if current admin user is active
     """
-    if not current_user.is_active:
+    if current_user.status != "active":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, 
-            detail="User không active"
+            detail="Admin user is not active"
         )
     return current_user
 
 
-def get_current_merchant_user(
-    current_user: User = Depends(get_current_user),
-) -> User:
+def get_current_hotel_admin(
+    current_user: TblAdminUsers = Depends(get_current_admin_user),
+) -> TblAdminUsers:
     """
-    Kiểm tra user hiện tại có phải merchant không
+    Check if current user is hotel admin
     """
-    if current_user.role != "merchant":
+    if current_user.role != "hotel_admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Chỉ merchant mới có quyền truy cập"
+            detail="Hotel admin access required"
         )
     return current_user
 
 
 def verify_tenant_permission(
     tenant_id: int,
-    current_user: User = Depends(get_current_user)
+    current_user: TblAdminUsers = Depends(get_current_admin_user)
 ) -> bool:
     """
-    Kiểm tra quyền truy cập tenant
-    - Admin có thể truy cập tất cả tenant
-    - User chỉ có thể truy cập tenant của mình
+    Verify tenant access permission
+    - Super admin can access all tenants
+    - Hotel admin can only access their assigned tenant
     """
-    if current_user.is_admin:
+    if current_user.role == "super_admin":
         return True
     
-    user_tenant_id = current_user.tenant_id or current_user.id
-    if tenant_id != user_tenant_id:
+    if current_user.role == "hotel_admin" and current_user.tenant_id != tenant_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Không có quyền truy cập tenant này"
+            detail="Access denied for this tenant"
         )
     
     return True
+
+
+def get_tenant_admin(
+    tenant_id: int,
+    current_user: TblAdminUsers = Depends(get_current_admin_user)
+) -> TblAdminUsers:
+    """
+    Get admin user with tenant verification
+    """
+    verify_tenant_permission(tenant_id, current_user)
+    return current_user

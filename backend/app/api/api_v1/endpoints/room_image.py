@@ -9,7 +9,7 @@ from app.crud.crud_room_image import (
     update_room_image,
     delete_room_image,
 )
-from app.db.session import get_db
+from app.db.session_mysql import get_db
 
 router = APIRouter()
 

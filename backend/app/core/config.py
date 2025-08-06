@@ -1,3 +1,4 @@
+import json
 import secrets
 from typing import Any, Dict, List, Optional, Union
 from pydantic import AnyHttpUrl, EmailStr, HttpUrl, field_validator, model_validator
@@ -13,24 +14,21 @@ class Settings(BaseSettings):
     SERVER_NAME: str = "Zalo Mini App Backend"
     SERVER_HOST: AnyHttpUrl = "http://localhost"
     
-    # CORS
-    BACKEND_CORS_ORIGINS: List[str] = []
-
-    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
-    @classmethod
-    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
-        if isinstance(v, str) and not v.startswith("["):
-            return [i.strip() for i in v.split(",")]
-        elif isinstance(v, (list, str)):
-            return v
-        raise ValueError(v)
+    # CORS Configuration
+    BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:5173", "http://localhost:8000"]
 
     PROJECT_NAME: str = "Zalo Mini App"
     
-    # Database
+    # Database Configuration
+    USE_LOCAL_DB: bool = True  # Set to False for remote MySQL, True for local MySQL on VPS
+    
+    # Local SQLite database (for development/testing)
+    LOCAL_DB_PATH: str = "local_test.db"
+    
+    # Remote MySQL database
     MYSQL_SERVER: str = "157.66.81.101"
     MYSQL_USER: str = "bookingservicesiovn_zalominidb"
-    MYSQL_PASSWORD: str = "VXpvfka7ON5DtJC1SW"
+    MYSQL_PASSWORD: str = "9XSZpTTBkA"
     MYSQL_DB: str = "bookingservicesiovn_zalominidb"
     DATABASE_URI: Optional[str] = None
 
@@ -39,7 +37,19 @@ class Settings(BaseSettings):
     def assemble_db_connection(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         if values.get("DATABASE_URI"):
             return values
-        values["DATABASE_URI"] = f"mysql+pymysql://{values.get('MYSQL_USER')}:{values.get('MYSQL_PASSWORD')}@{values.get('MYSQL_SERVER')}/{values.get('MYSQL_DB')}"
+        
+        # Use local MySQL if enabled, otherwise use remote MySQL
+        if values.get("USE_LOCAL_DB", True):
+            # Local MySQL on VPS
+            mysql_uri = f"mysql+pymysql://{values.get('MYSQL_USER')}:{values.get('MYSQL_PASSWORD')}@localhost/{values.get('MYSQL_DB')}"
+            values["DATABASE_URI"] = mysql_uri
+            print(f"🔧 Using local MySQL database: localhost")
+        else:
+            # Remote MySQL (original config)
+            mysql_uri = f"mysql+pymysql://{values.get('MYSQL_USER')}:{values.get('MYSQL_PASSWORD')}@{values.get('MYSQL_SERVER')}/{values.get('MYSQL_DB')}"
+            values["DATABASE_URI"] = mysql_uri
+            print(f"🔧 Using remote MySQL database: {values.get('MYSQL_SERVER')}")
+        
         return values
 
     # Email

@@ -5,7 +5,7 @@ import os
 import uuid
 from pathlib import Path
 import shutil
-from app.db.session import get_db
+from app.db.session_mysql import get_db
 from app.crud.crud_merchant import get_merchant, update_merchant
 from app.crud.crud_service import get_service, update_service
 from app.crud.crud_room import get_room, update_room

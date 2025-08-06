@@ -20,3 +20,11 @@ sqlmodel
 pymysql
 pydantic-core
 bcrypt==4.0.1
+
+# Production middleware and monitoring dependencies
+psutil>=5.9.0           # System monitoring
+cryptography>=3.4.8    # Enhanced security
+redis>=4.0.0           # Caching and rate limiting (optional)
+structlog>=22.0.0      # Structured logging
+prometheus-client>=0.15.0  # Metrics collection (optional)
+sentry-sdk[fastapi]>=1.0.0  # Error tracking (optional)
