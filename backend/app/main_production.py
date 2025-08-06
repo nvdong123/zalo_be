@@ -18,12 +18,19 @@ else:
     from core.config import get_db
     print("🔧 Running in DEVELOPMENT mode")
 
-# Import your existing API routes
+# Import your existing API routes - using same approach as main.py
 try:
-    from api.api_v1.api import api_router
-except ImportError:
-    print("⚠️  API routes not found, creating basic app")
-    api_router = None
+    from api.api_v1.endpoints import (
+        rooms, services, tenants, vouchers, 
+        booking_requests, customer_vouchers, customers,
+        facilities, facility_features, games, hotel_brands, promotions, room_stays,
+        service_bookings, admin_users, room_amenities, room_features
+    )
+    api_modules_loaded = True
+    print("✅ API modules loaded successfully")
+except ImportError as e:
+    print(f"⚠️  Some API routes not found: {e}")
+    api_modules_loaded = False
 
 # Create FastAPI application
 app = FastAPI(
@@ -49,8 +56,30 @@ app.add_middleware(
 )
 
 # Add your API routes if available
-if api_router:
-    app.include_router(api_router, prefix="/api/v1")
+if api_modules_loaded:
+    try:
+        app.include_router(admin_users.router, prefix="/api/v1", tags=["Admin Users"])
+        app.include_router(rooms.router, prefix="/api/v1", tags=["Rooms"])
+        app.include_router(room_amenities.router, prefix="/api/v1", tags=["Room Amenities"])
+        app.include_router(room_features.router, prefix="/api/v1", tags=["Room Features"])
+        app.include_router(services.router, prefix="/api/v1", tags=["Services"])
+        app.include_router(tenants.router, prefix="/api/v1", tags=["Tenants"])
+        app.include_router(vouchers.router, prefix="/api/v1", tags=["Vouchers"])
+        app.include_router(booking_requests.router, prefix="/api/v1", tags=["Booking Requests"])
+        app.include_router(customer_vouchers.router, prefix="/api/v1", tags=["Customer Vouchers"])
+        app.include_router(customers.router, prefix="/api/v1", tags=["Customers"])
+        app.include_router(facilities.router, prefix="/api/v1", tags=["Facilities"])
+        app.include_router(facility_features.router, prefix="/api/v1", tags=["Facility Features"])
+        app.include_router(games.router, prefix="/api/v1", tags=["Games"])
+        app.include_router(hotel_brands.router, prefix="/api/v1", tags=["Hotel Brands"])
+        app.include_router(promotions.router, prefix="/api/v1", tags=["Promotions"]) 
+        app.include_router(room_stays.router, prefix="/api/v1", tags=["Room Stays"])
+        app.include_router(service_bookings.router, prefix="/api/v1", tags=["Service Bookings"])
+        print("✅ All API routers included")
+    except Exception as e:
+        print(f"⚠️  Error including some routers: {e}")
+else:
+    print("⚠️  Running with basic endpoints only")
 
 # Health check endpoint
 @app.get("/health")
