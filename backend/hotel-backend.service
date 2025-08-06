@@ -11,17 +11,14 @@ Group=hotelapp
 WorkingDirectory=/var/www/hotel-backend/backend
 Environment=PATH=/var/www/hotel-backend/backend/venv/bin
 Environment=PYTHONPATH=/var/www/hotel-backend/backend
-ExecStart=/var/www/hotel-backend/backend/venv/bin/gunicorn \
-    --bind 127.0.0.1:8000 \
+ExecStart=/var/www/hotel-backend/backend/venv/bin/uvicorn \
+    app.main:app \
+    --host 127.0.0.1 \
+    --port 8000 \
     --workers 4 \
-    --worker-class uvicorn.workers.UvicornWorker \
-    --timeout 120 \
-    --max-requests 1000 \
-    --max-requests-jitter 100 \
-    --access-logfile /var/log/hotel-backend/access.log \
-    --error-logfile /var/log/hotel-backend/error.log \
-    --log-level info \
-    app.main:app
+    --timeout-keep-alive 120 \
+    --access-log \
+    --log-level info
 
 Restart=always
 RestartSec=10
