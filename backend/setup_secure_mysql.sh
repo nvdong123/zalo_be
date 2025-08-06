@@ -48,15 +48,32 @@ fi
 # Step 2: Secure MySQL Installation
 echo -e "${BLUE}🔒 Step 2: Securing MySQL Installation...${NC}"
 
-# Set root password and secure installation
-sudo mysql << EOF
-ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '$MYSQL_ROOT_PASS';
+# Get MySQL temporary root password (AlmaLinux auto-generates one)
+TEMP_MYSQL_PASS=$(sudo grep 'temporary password' /var/log/mysqld.log | awk '{print $NF}' | tail -1)
+
+if [ -z "$TEMP_MYSQL_PASS" ]; then
+    echo -e "${YELLOW}⚠️  No temporary password found, trying without password...${NC}"
+    # Set root password without existing password
+    mysql << EOF
+ALTER USER 'root'@'localhost' IDENTIFIED BY '$MYSQL_ROOT_PASS';
 DELETE FROM mysql.user WHERE User='';
 DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');
 DROP DATABASE IF EXISTS test;
 DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
 FLUSH PRIVILEGES;
 EOF
+else
+    echo -e "${YELLOW}📋 Found temporary password, updating root password...${NC}"
+    # Use temporary password to set new root password
+    mysql -u root -p"$TEMP_MYSQL_PASS" --connect-expired-password << EOF
+ALTER USER 'root'@'localhost' IDENTIFIED BY '$MYSQL_ROOT_PASS';
+DELETE FROM mysql.user WHERE User='';
+DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');
+DROP DATABASE IF EXISTS test;
+DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
+FLUSH PRIVILEGES;
+EOF
+fi
 
 echo -e "${GREEN}✅ MySQL root secured${NC}"
 
@@ -94,10 +111,10 @@ fi
 echo -e "${BLUE}🔧 Step 4: Configuring MySQL security settings...${NC}"
 
 # Backup original config
-sudo cp /etc/mysql/mysql.conf.d/mysqld.cnf /etc/mysql/mysql.conf.d/mysqld.cnf.backup
+sudo cp /etc/my.cnf /etc/my.cnf.backup 2>/dev/null || true
 
-# Create secure MySQL configuration
-sudo tee /etc/mysql/mysql.conf.d/mysqld-secure.cnf > /dev/null << EOF
+# Create secure MySQL configuration for AlmaLinux
+sudo tee /etc/my.cnf.d/hotel-secure.cnf > /dev/null << EOF
 [mysqld]
 # Security Settings
 bind-address = 127.0.0.1
@@ -115,28 +132,13 @@ connect_timeout = 10
 wait_timeout = 600
 interactive_timeout = 600
 
-# Binary Logging (for backup)
-log-bin = mysql-bin
-expire_logs_days = 7
-max_binlog_size = 100M
-
-# Error Logging
-log-error = /var/log/mysql/error.log
-
-# Slow Query Log
-slow_query_log = 1
-slow_query_log_file = /var/log/mysql/slow.log
-long_query_time = 2
-
 # Character Set
 character-set-server = utf8mb4
 collation-server = utf8mb4_unicode_ci
 
 # InnoDB Settings
 innodb_buffer_pool_size = 256M
-innodb_log_file_size = 64M
 innodb_file_per_table = 1
-innodb_flush_log_at_trx_commit = 1
 EOF
 
 # Step 5: Set up MySQL firewall rules

@@ -70,15 +70,15 @@ print(f'SQLAlchemy: {sqlalchemy.__version__}')
 
 echo -e "${GREEN}✅ Dependencies installed!${NC}"
 
-# Step 3: Setup MySQL
-echo -e "${BLUE}🔒 Step 3: Setting up secure MySQL...${NC}"
-chmod +x setup_secure_mysql.sh
-./setup_secure_mysql.sh
+# Step 3: Configure Existing MySQL
+echo -e "${BLUE}🔒 Step 3: Configuring existing MySQL...${NC}"
+chmod +x configure_existing_mysql.sh
+./configure_existing_mysql.sh
 
 if [ $? -eq 0 ]; then
-    echo -e "${GREEN}✅ MySQL setup completed!${NC}"
+    echo -e "${GREEN}✅ MySQL configuration completed!${NC}"
 else
-    echo -e "${RED}❌ MySQL setup failed!${NC}"
+    echo -e "${RED}❌ MySQL configuration failed!${NC}"
     exit 1
 fi
 
@@ -113,7 +113,7 @@ fi
 # Step 6: Setup systemd service
 echo -e "${BLUE}🔧 Step 6: Configuring systemd service...${NC}"
 
-# Update service for AlmaLinux
+# Update service for AlmaLinux with production config
 sudo tee /etc/systemd/system/hotel-backend.service > /dev/null << 'EOF'
 [Unit]
 Description=Hotel Management Backend API
@@ -127,8 +127,9 @@ Group=root
 WorkingDirectory=/var/www/hotel-backend/backend
 Environment=PATH=/var/www/hotel-backend/backend/venv/bin:/usr/local/bin
 Environment=PYTHONPATH=/var/www/hotel-backend/backend
+Environment=APP_ENV=production
 ExecStart=/var/www/hotel-backend/backend/venv/bin/uvicorn \
-    app.main:app \
+    app.main_production:app \
     --host 127.0.0.1 \
     --port 8000 \
     --workers 2 \
