@@ -94,12 +94,23 @@ fi
 # Step 4: Update FastAPI configuration
 echo -e "${BLUE}⚙️ Step 4: Creating FastAPI database configuration...${NC}"
 
+# URL encode the password for DATABASE_URL
+# This handles special characters in passwords
+python3 -c "
+import urllib.parse
+password = '$APP_DB_PASS'
+encoded_password = urllib.parse.quote_plus(password)
+print(f'Encoded password: {encoded_password}')
+" > /tmp/encoded_pass.txt
+
+ENCODED_APP_DB_PASS=$(python3 -c "import urllib.parse; print(urllib.parse.quote_plus('$APP_DB_PASS'))")
+
 # Create environment configuration for your setup
 cat > app/.env.production << EOF
 # Production Database Configuration
-DATABASE_URL=mysql+pymysql://$APP_DB_USER:$APP_DB_PASS@$MYSQL_HOST:$MYSQL_PORT/$DB_NAME
+DATABASE_URL=mysql+pymysql://$APP_DB_USER:$ENCODED_APP_DB_PASS@$MYSQL_HOST:$MYSQL_PORT/$DB_NAME
 
-# Database Connection Settings
+# Database Connection Settings (raw values for direct connections)
 DB_HOST=$MYSQL_HOST
 DB_PORT=$MYSQL_PORT
 DB_USER=$APP_DB_USER
@@ -130,24 +141,80 @@ cat > test_db_connection.py << 'EOF'
 
 import os
 import sys
+import urllib.parse
 from sqlalchemy import create_engine, text
 import pymysql
 
 # Add app directory to Python path
 sys.path.append('/var/www/hotel-backend/backend/app')
 
-def test_connection():
-    """Test database connection"""
+def test_direct_connection():
+    """Test direct database connection without .env file"""
+    
+    # Direct connection parameters
+    host = "localhost"
+    port = 3306
+    user = "hotel_app_user"
+    password = "HotelApp2025!@#Secure"
+    database = "bookingservicesiovn_zalominidb"
+    
+    print(f"🔍 Testing direct connection to {user}@{host}:{port}/{database}")
+    
+    try:
+        # Test with pymysql directly first
+        connection = pymysql.connect(
+            host=host,
+            port=port,
+            user=user,
+            password=password,
+            database=database,
+            charset='utf8mb4'
+        )
+        
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT VERSION()")
+            version = cursor.fetchone()
+            print(f"✅ PyMySQL direct connection successful!")
+            print(f"   MySQL Version: {version[0]}")
+            
+            cursor.execute("SELECT DATABASE()")
+            current_db = cursor.fetchone()
+            print(f"   Current Database: {current_db[0]}")
+            
+            cursor.execute("SHOW TABLES")
+            tables = cursor.fetchall()
+            print(f"   Tables in database: {len(tables)}")
+            
+        connection.close()
+        return True
+        
+    except Exception as e:
+        print(f"❌ Direct connection failed: {e}")
+        return False
+
+def test_sqlalchemy_connection():
+    """Test SQLAlchemy connection"""
     
     # Load environment variables
-    from dotenv import load_dotenv
-    load_dotenv('app/.env.production')
+    try:
+        from dotenv import load_dotenv
+        load_dotenv('app/.env.production')
+    except ImportError:
+        print("⚠️  python-dotenv not installed, using direct values")
     
-    database_url = os.getenv('DATABASE_URL')
+    # Get connection parameters
+    host = os.getenv("DB_HOST", "localhost")
+    port = os.getenv("DB_PORT", "3306")
+    user = os.getenv("DB_USER", "hotel_app_user")
+    password = os.getenv("DB_PASSWORD", "HotelApp2025!@#Secure")
+    database = os.getenv("DB_NAME", "bookingservicesiovn_zalominidb")
     
-    if not database_url:
-        print("❌ DATABASE_URL not found in environment")
-        return False
+    # URL encode password to handle special characters
+    encoded_password = urllib.parse.quote_plus(password)
+    database_url = f"mysql+pymysql://{user}:{encoded_password}@{host}:{port}/{database}"
+    
+    print(f"🔍 Testing SQLAlchemy connection...")
+    print(f"   URL: mysql+pymysql://{user}:***@{host}:{port}/{database}")
     
     try:
         # Create engine
@@ -157,7 +224,7 @@ def test_connection():
         with engine.connect() as connection:
             result = connection.execute(text("SELECT VERSION() as version"))
             version = result.fetchone()
-            print(f"✅ Database connection successful!")
+            print(f"✅ SQLAlchemy connection successful!")
             print(f"   MySQL Version: {version[0]}")
             
             # Test database exists
@@ -173,12 +240,32 @@ def test_connection():
         return True
         
     except Exception as e:
-        print(f"❌ Database connection failed: {e}")
+        print(f"❌ SQLAlchemy connection failed: {e}")
         return False
 
 if __name__ == "__main__":
-    success = test_connection()
-    sys.exit(0 if success else 1)
+    print("🧪 DATABASE CONNECTION TEST")
+    print("==========================")
+    
+    # Test 1: Direct PyMySQL connection
+    print("\n📌 Test 1: Direct PyMySQL Connection")
+    direct_success = test_direct_connection()
+    
+    # Test 2: SQLAlchemy connection
+    print("\n📌 Test 2: SQLAlchemy Connection")
+    sqlalchemy_success = test_sqlalchemy_connection()
+    
+    # Summary
+    print(f"\n📋 RESULTS:")
+    print(f"   Direct PyMySQL: {'✅ SUCCESS' if direct_success else '❌ FAILED'}")
+    print(f"   SQLAlchemy: {'✅ SUCCESS' if sqlalchemy_success else '❌ FAILED'}")
+    
+    if direct_success and sqlalchemy_success:
+        print("\n🎉 All database connection tests passed!")
+        sys.exit(0)
+    else:
+        print("\n❌ Some database connection tests failed!")
+        sys.exit(1)
 EOF
 
 chmod +x test_db_connection.py

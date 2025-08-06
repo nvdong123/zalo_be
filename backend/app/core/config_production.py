@@ -2,6 +2,7 @@
 Database configuration for production using existing MySQL setup
 """
 import os
+import urllib.parse
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -17,8 +18,13 @@ MYSQL_USER = os.getenv("DB_USER", "hotel_app_user")
 MYSQL_PASSWORD = os.getenv("DB_PASSWORD", "HotelApp2025!@#Secure")
 MYSQL_DATABASE = os.getenv("DB_NAME", "bookingservicesiovn_zalominidb")
 
-# Construct database URL
-DATABASE_URL = f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DATABASE}"
+# URL encode password to handle special characters
+ENCODED_PASSWORD = urllib.parse.quote_plus(MYSQL_PASSWORD)
+
+# Construct database URL with proper encoding
+DATABASE_URL = f"mysql+pymysql://{MYSQL_USER}:{ENCODED_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DATABASE}"
+
+print(f"🔍 Database config: {MYSQL_USER}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DATABASE}")
 
 # SQLAlchemy engine with connection pooling
 engine = create_engine(
