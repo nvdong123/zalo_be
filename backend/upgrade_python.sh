@@ -21,66 +21,61 @@ echo -e "${YELLOW}🔄 Starting Python upgrade process...${NC}"
 
 # Step 1: Update system packages
 echo -e "${BLUE}📦 Step 1: Updating system packages...${NC}"
-sudo apt update
-sudo apt upgrade -y
+sudo dnf update -y
 
 # Step 2: Install dependencies for building Python
 echo -e "${BLUE}📦 Step 2: Installing build dependencies...${NC}"
-sudo apt install -y \
-    build-essential \
-    zlib1g-dev \
-    libncurses5-dev \
-    libgdbm-dev \
-    libnss3-dev \
-    libssl-dev \
-    libreadline-dev \
-    libffi-dev \
-    libsqlite3-dev \
+sudo dnf config-manager --set-enabled powertools
+sudo dnf install -y epel-release
+sudo dnf groupinstall -y "Development Tools"
+sudo dnf install -y \
+    zlib-devel \
+    bzip2-devel \
+    openssl-devel \
+    ncurses-devel \
+    sqlite-devel \
+    readline-devel \
+    tk-devel \
+    libffi-devel \
+    xz-devel \
     wget \
-    libbz2-dev \
-    pkg-config \
-    make \
-    gcc
+    gcc \
+    make
 
-# Step 3: Add deadsnakes PPA for latest Python versions
-echo -e "${BLUE}📦 Step 3: Adding deadsnakes PPA...${NC}"
-sudo apt install -y software-properties-common
-sudo add-apt-repository ppa:deadsnakes/ppa -y
-sudo apt update
+# Step 3: Install Python 3.11 from source
+echo -e "${BLUE}🐍 Step 3: Installing Python 3.11 from source...${NC}"
+cd /tmp
+wget https://www.python.org/ftp/python/3.11.7/Python-3.11.7.tgz
+tar xzf Python-3.11.7.tgz
+cd Python-3.11.7
+./configure --enable-optimizations --with-ensurepip=install --prefix=/usr/local
+make -j$(nproc)
+sudo make altinstall
 
-# Step 4: Install Python 3.11
-echo -e "${BLUE}🐍 Step 4: Installing Python 3.11...${NC}"
-sudo apt install -y python3.11 python3.11-venv python3.11-dev python3.11-distutils
+# Step 4: Create symlinks
+echo -e "${BLUE}🔧 Step 4: Setting up Python 3.11...${NC}"
+sudo ln -sf /usr/local/bin/python3.11 /usr/local/bin/python3
+sudo ln -sf /usr/local/bin/pip3.11 /usr/local/bin/pip3
 
-# Step 5: Install pip for Python 3.11
-echo -e "${BLUE}📦 Step 5: Installing pip for Python 3.11...${NC}"
-curl -sS https://bootstrap.pypa.io/get-pip.py | sudo python3.11
+# Step 5: Verify installation
+echo -e "${BLUE}✅ Step 5: Verifying Python installation...${NC}"
+/usr/local/bin/python3.11 --version
+/usr/local/bin/pip3.11 --version
 
-# Step 6: Update alternatives to use Python 3.11 as default
-echo -e "${BLUE}🔧 Step 6: Setting Python 3.11 as default...${NC}"
-sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
-sudo update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1
-
-# Step 7: Verify installation
-echo -e "${BLUE}✅ Step 7: Verifying Python installation...${NC}"
-python3 --version
-python --version
-pip3 --version
-
-# Step 8: Backup current project
+# Step 6: Backup current project
 echo -e "${BLUE}💾 Step 8: Backing up current project...${NC}"
 cd /var/www/hotel-backend/
 sudo cp -r backend backend_backup_$(date +%Y%m%d_%H%M%S)
 
-# Step 9: Recreate virtual environment with Python 3.11
-echo -e "${BLUE}🔄 Step 9: Recreating virtual environment...${NC}"
+# Step 7: Recreate virtual environment with Python 3.11
+echo -e "${BLUE}🔄 Step 7: Recreating virtual environment...${NC}"
 cd /var/www/hotel-backend/backend
 
 # Remove old venv
 sudo rm -rf venv
 
 # Create new venv with Python 3.11
-python3.11 -m venv venv
+/usr/local/bin/python3.11 -m venv venv
 source venv/bin/activate
 
 # Upgrade pip in new venv
