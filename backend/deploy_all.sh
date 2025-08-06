@@ -96,8 +96,87 @@ fi
 echo -e "${BLUE}🌐 Step 5: Setting up Nginx...${NC}"
 sudo dnf install -y nginx
 
-# Copy nginx config
-sudo cp nginx.conf /etc/nginx/conf.d/hotel-backend.conf
+# Remove any conflicting configurations
+sudo rm -f /etc/nginx/sites-enabled/default 2>/dev/null
+sudo rm -f /etc/nginx/conf.d/default.conf 2>/dev/null
+sudo rm -f /etc/nginx/conf.d/hotel-backend.conf 2>/dev/null
+
+# Create clean nginx configuration
+sudo tee /etc/nginx/conf.d/bookingservices.conf > /dev/null << 'EOF'
+# Hotel Management System - Clean Configuration
+
+# HTTP server - redirect to HTTPS
+server {
+    listen 80;
+    listen [::]:80;
+    server_name bookingservices.io.vn www.bookingservices.io.vn;
+    return 301 https://$server_name$request_uri;
+}
+
+# HTTPS server
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name bookingservices.io.vn www.bookingservices.io.vn;
+    
+    # SSL certificates (will be configured by certbot)
+    # ssl_certificate and ssl_certificate_key will be added by certbot
+    
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    
+    # API proxy
+    location /api/ {
+        proxy_pass http://127.0.0.1:8000/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+    
+    location /health {
+        proxy_pass http://127.0.0.1:8000/health;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    
+    location / {
+        return 301 /api/docs;
+    }
+}
+
+# IP access server
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name 157.10.199.22 _;
+    
+    location /api/ {
+        proxy_pass http://127.0.0.1:8000/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    
+    location /health {
+        proxy_pass http://127.0.0.1:8000/health;
+        proxy_set_header Host $host;
+    }
+    
+    location / {
+        return 301 /api/docs;
+    }
+}
+EOF
 
 # Test nginx config
 sudo nginx -t
