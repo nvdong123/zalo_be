@@ -28,13 +28,17 @@ echo ""
 echo -e "${BLUE}📦 Step 1: Installing MySQL Server...${NC}"
 
 # Update system
-sudo apt update
+sudo dnf update -y
 
 # Install MySQL Server
-sudo apt install -y mysql-server mysql-client
+sudo dnf install -y mysql-server mysql
+
+# Start and enable MySQL
+sudo systemctl start mysqld
+sudo systemctl enable mysqld
 
 # Check if MySQL is running
-if sudo systemctl is-active --quiet mysql; then
+if sudo systemctl is-active --quiet mysqld; then
     echo -e "${GREEN}✅ MySQL Server installed and running${NC}"
 else
     echo -e "${RED}❌ MySQL Server installation failed${NC}"
@@ -138,16 +142,17 @@ EOF
 # Step 5: Set up MySQL firewall rules
 echo -e "${BLUE}🔥 Step 5: Configuring firewall for MySQL...${NC}"
 
-# Block external MySQL access
-sudo ufw deny 3306
+# Block external MySQL access (using firewalld on AlmaLinux)
+sudo firewall-cmd --permanent --remove-service=mysql 2>/dev/null || true
+sudo firewall-cmd --reload
 echo -e "${GREEN}✅ MySQL port 3306 blocked from external access${NC}"
 
 # Step 6: Restart MySQL with new configuration
 echo -e "${BLUE}🔄 Step 6: Restarting MySQL with secure configuration...${NC}"
 
-sudo systemctl restart mysql
+sudo systemctl restart mysqld
 
-if sudo systemctl is-active --quiet mysql; then
+if sudo systemctl is-active --quiet mysqld; then
     echo -e "${GREEN}✅ MySQL restarted successfully${NC}"
 else
     echo -e "${RED}❌ MySQL restart failed${NC}"
