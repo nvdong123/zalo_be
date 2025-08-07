@@ -2,7 +2,7 @@
 # Complete Deployment Script - Run Everything
 # This will set up the entire hotel management system on AlmaLinux VPS
 
-echo "🚀 COMPLETE DEPLOYMENT FOR BOOKINGSERVICES.IO.VN"
+echo "🚀 COMPLETE DEPLOYMENT FOR ZALOMINIAPP.VTLINK.VN"
 echo "==============================================="
 
 # Colors
@@ -102,14 +102,14 @@ sudo rm -f /etc/nginx/conf.d/default.conf 2>/dev/null
 sudo rm -f /etc/nginx/conf.d/hotel-backend.conf 2>/dev/null
 
 # Create clean nginx configuration
-sudo tee /etc/nginx/conf.d/bookingservices.conf > /dev/null << 'EOF'
-# Hotel Management System - Clean Configuration
+sudo tee /etc/nginx/conf.d/zalominiapp.conf > /dev/null << 'EOF'
+# ZaloMiniApp VTLink Domain Configuration
 
 # HTTP server - redirect to HTTPS
 server {
     listen 80;
     listen [::]:80;
-    server_name bookingservices.io.vn www.bookingservices.io.vn;
+    server_name zalominiapp.vtlink.vn www.zalominiapp.vtlink.vn;
     return 301 https://$server_name$request_uri;
 }
 
@@ -117,7 +117,7 @@ server {
 server {
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
-    server_name bookingservices.io.vn www.bookingservices.io.vn;
+    server_name zalominiapp.vtlink.vn www.zalominiapp.vtlink.vn;
     
     # SSL certificates (will be configured by certbot)
     # ssl_certificate and ssl_certificate_key will be added by certbot
@@ -239,7 +239,7 @@ echo -e "${BLUE}🔒 Step 7: Setting up SSL certificate...${NC}"
 sudo dnf install -y certbot python3-certbot-nginx
 
 # Request SSL certificate
-sudo certbot --nginx -d bookingservices.io.vn --non-interactive --agree-tos --email admin@bookingservices.io.vn
+sudo certbot --nginx -d zalominiapp.vtlink.vn --non-interactive --agree-tos --email admin@zalominiapp.vtlink.vn
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✅ SSL certificate installed!${NC}"
@@ -266,7 +266,7 @@ curl -s http://127.0.0.1:8000/docs >/dev/null && echo "✅ Local API: OK" || ech
 curl -s http://localhost/api/docs >/dev/null && echo "✅ Nginx proxy: OK" || echo "❌ Nginx proxy: Failed"
 
 # Test HTTPS (if SSL is configured)
-curl -s https://bookingservices.io.vn/api/docs >/dev/null && echo "✅ HTTPS: OK" || echo "⚠️  HTTPS: Not ready"
+curl -s https://zalominiapp.vtlink.vn/api/docs >/dev/null && echo "✅ HTTPS: OK" || echo "⚠️  HTTPS: Not ready"
 
 # Step 9: Setup monitoring and backups
 echo -e "${BLUE}📊 Step 9: Setting up monitoring...${NC}"
@@ -294,8 +294,8 @@ echo "   ✅ Automated backups"
 echo ""
 echo -e "${YELLOW}🔗 Access Points:${NC}"
 echo "   • Local API: http://127.0.0.1:8000/docs"
-echo "   • Nginx Proxy: http://bookingservices.io.vn/api/docs"
-echo "   • HTTPS: https://bookingservices.io.vn/api/docs"
+echo "   • Nginx Proxy: http://zalominiapp.vtlink.vn/api/docs"
+echo "   • HTTPS: https://zalominiapp.vtlink.vn/api/docs"
 echo ""
 echo -e "${YELLOW}🔧 Management Commands:${NC}"
 echo "   • Check service: sudo systemctl status hotel-backend"
