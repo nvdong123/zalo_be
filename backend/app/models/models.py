@@ -12,6 +12,19 @@ from datetime import datetime
 
 Base = declarative_base()
 
+# Test table for Zalo app - no tenant_id required
+class TblTestItems(Base):
+    __tablename__ = 'tbl_test_items'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text)
+    price = Column(DECIMAL(10, 2))
+    image_url = Column(String(500))
+    status = Column(String(20), default='active')
+    created_at = Column(DateTime, nullable=False, default=func.current_timestamp())
+    updated_at = Column(DateTime, nullable=False, default=func.current_timestamp(), onupdate=func.current_timestamp())
+
 class TblTenants(Base):
     __tablename__ = 'tbl_tenants'
     

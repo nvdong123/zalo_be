@@ -10,7 +10,7 @@ from app.api.api_v1.endpoints import (
     auth, rooms, services, tenants, vouchers, 
     booking_requests, customer_vouchers, customers,
     facilities, facility_features, games, hotel_brands, promotions, room_stays,
-    service_bookings, admin_users, room_amenities, room_features, experiences
+    service_bookings, admin_users, room_amenities, room_features, experiences, test_items
 )
 
 # Import database and models
@@ -189,6 +189,7 @@ app.include_router(hotel_brands.router, prefix="/api/v1", tags=["Hotel Brands"])
 app.include_router(promotions.router, prefix="/api/v1", tags=["Promotions"]) 
 app.include_router(room_stays.router, prefix="/api/v1", tags=["Room Stays"])
 app.include_router(service_bookings.router, prefix="/api/v1", tags=["Service Bookings"])
+app.include_router(test_items.router, prefix="/api/v1/test-items", tags=["Test Items - Zalo"])
 
 # Mount static files for serving uploaded images
 uploads_dir = "uploads"

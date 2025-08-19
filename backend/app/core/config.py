@@ -15,7 +15,12 @@ class Settings(BaseSettings):
     SERVER_HOST: AnyHttpUrl = "http://localhost"
     
     # CORS Configuration
-    BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:5173", "http://localhost:8000"]
+    BACKEND_CORS_ORIGINS: List[str] = [
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://localhost:8889",
+        "http://localhost:8000",
+    ]
 
     PROJECT_NAME: str = "Zalo Mini App"
     

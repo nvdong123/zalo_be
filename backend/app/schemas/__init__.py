@@ -17,4 +17,5 @@ from .room_stays import *
 from .services import *
 from .service_bookings import *
 from .tenants import *
+from .test_items import *
 from .vouchers import *
