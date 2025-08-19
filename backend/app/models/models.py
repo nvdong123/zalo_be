@@ -334,6 +334,25 @@ class TblRoomStays(Base):
     deleted_at = Column(DateTime, default=None)
     deleted_by = Column(String(50), default=None)
 
+class TblExperiences(Base):
+    __tablename__ = 'tbl_experiences'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    tenant_id = Column(Integer, nullable=False, index=True)
+    type = Column(String(100), nullable=False)
+    images = Column(JSON)  # Array of image URLs
+    title = Column(String(255))
+    description = Column(JSON)  # Array of description strings
+    vr360_url = Column(String(500))
+    video_url = Column(String(500))
+    created_at = Column(DateTime, nullable=False, default=func.current_timestamp())
+    updated_at = Column(DateTime, nullable=False, default=func.current_timestamp(), onupdate=func.current_timestamp())
+    created_by = Column(String(50))
+    updated_by = Column(String(50))
+    deleted = Column(Integer, default=0)
+    deleted_at = Column(DateTime, default=None)
+    deleted_by = Column(String(50), default=None)
+
 # Admin Users table for authentication
 class TblAdminUsers(Base):
     __tablename__ = 'tbl_admin_users'

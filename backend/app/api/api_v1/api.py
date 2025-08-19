@@ -14,6 +14,7 @@ from app.api.api_v1.endpoints import (
     vouchers,
     services,
     facilities,
+    experiences,
     hotel_brands,
     auth,
     facility_images,
@@ -36,6 +37,7 @@ api_router.include_router(promotions.router, prefix="/api/v1/promotions", tags=[
 api_router.include_router(vouchers.router, prefix="/api/v1/vouchers", tags=["vouchers"])
 api_router.include_router(services.router, prefix="/api/v1/services", tags=["services"])
 api_router.include_router(facilities.router, prefix="/api/v1/facilities", tags=["facilities"])
+api_router.include_router(experiences.router, prefix="/api/v1/experiences", tags=["experiences"])
 api_router.include_router(hotel_brands.router, prefix="/api/v1/hotel-brands", tags=["hotel-brands"])
 
 # Authentication endpoints

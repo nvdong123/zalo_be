@@ -4,6 +4,7 @@ from .admin_users import *
 from .booking_requests import *
 from .customers import *
 from .customer_vouchers import *
+from .experiences import *
 from .facilities import *
 from .facility_features import *
 from .games import *

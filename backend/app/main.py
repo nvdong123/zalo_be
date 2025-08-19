@@ -7,10 +7,10 @@ import os
 
 # Import API endpoints
 from app.api.api_v1.endpoints import (
-    rooms, services, tenants, vouchers, 
+    auth, rooms, services, tenants, vouchers, 
     booking_requests, customer_vouchers, customers,
     facilities, facility_features, games, hotel_brands, promotions, room_stays,
-    service_bookings, admin_users, room_amenities, room_features
+    service_bookings, admin_users, room_amenities, room_features, experiences
 )
 
 # Import database and models
@@ -170,6 +170,7 @@ async def get_system_status():
     return system_monitor.get_system_status()
 
 # Include routers for the imported modules
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
 app.include_router(admin_users.router, prefix="/api/v1", tags=["Admin Users"])
 app.include_router(rooms.router, prefix="/api/v1", tags=["Rooms"])
 app.include_router(room_amenities.router, prefix="/api/v1", tags=["Room Amenities"])
@@ -182,6 +183,7 @@ app.include_router(customer_vouchers.router, prefix="/api/v1", tags=["Customer V
 app.include_router(customers.router, prefix="/api/v1", tags=["Customers"])
 app.include_router(facilities.router, prefix="/api/v1", tags=["Facilities"])
 app.include_router(facility_features.router, prefix="/api/v1", tags=["Facility Features"])
+app.include_router(experiences.router, prefix="/api/v1", tags=["Experiences"])
 app.include_router(games.router, prefix="/api/v1", tags=["Games"])
 app.include_router(hotel_brands.router, prefix="/api/v1", tags=["Hotel Brands"])
 app.include_router(promotions.router, prefix="/api/v1", tags=["Promotions"]) 

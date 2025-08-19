@@ -25,10 +25,10 @@ class Settings(BaseSettings):
     # Local SQLite database (for development/testing)
     LOCAL_DB_PATH: str = "local_test.db"
     
-    # Remote MySQL database
-    MYSQL_SERVER: str = "157.66.81.101"
-    MYSQL_USER: str = "bookingservicesiovn_zalominidb"
-    MYSQL_PASSWORD: str = "9XSZpTTBkA"
+    # Remote MySQL database - UPDATED FOR LOCAL TESTING
+    MYSQL_SERVER: str = "localhost"
+    MYSQL_USER: str = "root"
+    MYSQL_PASSWORD: str = "123456"
     MYSQL_DB: str = "bookingservicesiovn_zalominidb"
     DATABASE_URI: Optional[str] = None
 

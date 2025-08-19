@@ -6,22 +6,21 @@ from sqlalchemy.orm import Session
 from jose import jwt
 from pydantic import BaseModel
 
-from app.core.config import settings
-from app.core.deps import get_db, get_current_admin_user
+from app.core.config_sqlite import settings
+from app.core.deps_sqlite import get_db, get_current_admin_user
 from app.crud.crud_admin_users import crud_admin_user
-from app.schemas.admin_users import AdminUserResponse
 
 router = APIRouter()
-
 
 class Token(BaseModel):
     access_token: str
     token_type: str
 
-
-class TokenData(BaseModel):
-    user_id: int = None
-
+class LoginResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str
+    user: dict
 
 def create_access_token(data: dict, expires_delta: timedelta = None) -> str:
     """Create JWT access token"""
@@ -39,8 +38,7 @@ def create_access_token(data: dict, expires_delta: timedelta = None) -> str:
     )
     return encoded_jwt
 
-
-@router.post("/login", response_model=Token)
+@router.post("/login", response_model=LoginResponse)
 def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
@@ -63,15 +61,36 @@ def login_for_access_token(
         data={"sub": str(user.id)}, expires_delta=access_token_expires
     )
     
+    refresh_token = create_access_token(
+        data={"sub": str(user.id), "type": "refresh"}, 
+        expires_delta=timedelta(days=30)
+    )
+    
     return {
         "access_token": access_token,
+        "refresh_token": refresh_token,
         "token_type": "bearer",
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "full_name": getattr(user, 'full_name', user.username),
+            "role": user.role,
+            "tenant_id": getattr(user, 'tenant_id', None),
+            "is_active": getattr(user, 'status', 'active') == 'active',
+            "created_at": getattr(user, 'created_at', datetime.now()).isoformat(),
+            "updated_at": getattr(user, 'updated_at', datetime.now()).isoformat(),
+        }
     }
 
-
-@router.post("/test-token", response_model=AdminUserResponse)
-def test_token(current_user: AdminUserResponse = Depends(get_current_admin_user)) -> Any:
+@router.post("/test-token")
+def test_token(current_user = Depends(get_current_admin_user)) -> Any:
     """
     Test access token
     """
-    return current_user
+    return {
+        "id": current_user.id,
+        "username": current_user.username,
+        "email": current_user.email,
+        "role": current_user.role,
+    }
