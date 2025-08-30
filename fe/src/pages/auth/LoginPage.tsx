@@ -150,14 +150,6 @@ const LoginPage: React.FC = () => {
             </Form.Item>
           </Form>
           
-          <div style={{ marginTop: 16, padding: '12px', background: '#f9f9f9', borderRadius: '4px' }}>
-            <h4 style={{ margin: '0 0 8px 0', color: '#666' }}>Demo Credentials:</h4>
-            <p style={{ margin: 0, fontSize: '12px', color: '#999' }}>
-              <strong>Super Admin:</strong> superadmin / admin123<br/>
-              <strong>Grand Hotel Admin:</strong> admin_grand / admin123<br/>
-              <strong>Beach Resort Admin:</strong> admin_beach / admin123
-            </p>
-          </div>
         </Card>
       </Col>
     </Row>
