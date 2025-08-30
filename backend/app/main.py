@@ -50,9 +50,7 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
-    openapi_url="/api/openapi.json",
-    swagger_ui_css_url=None,
-    swagger_ui_js_url=None
+    openapi_url="/api/openapi.json"
 )
 
 # CORS middleware - ADD FIRST to avoid issues with preflight requests
