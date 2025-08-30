@@ -1,31 +1,46 @@
 from pydantic import BaseModel
-from typing import Optional, List
-import datetime
+from datetime import datetime
+from typing import Optional
 
+# Base experience schema
 class ExperienceBase(BaseModel):
-    tenant_id: int
-    type: str
-    images: Optional[List[str]] = None
-    title: Optional[str] = None
-    description: Optional[List[str]] = None
-    vr360_url: Optional[str] = None
-    video_url: Optional[str] = None
-    created_by: Optional[str] = None
-    updated_by: Optional[str] = None
-    deleted: Optional[int] = None
-    deleted_at: Optional[datetime.datetime] = None
-    deleted_by: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    type: Optional[str] = None
+    price: Optional[float] = None
+    duration_minutes: Optional[int] = None
+    max_participants: Optional[int] = None
+    location: Optional[str] = None
+    image_url: Optional[str] = None
+    status: Optional[str] = 'active'
 
-class ExperienceCreate(ExperienceBase):
+# Schema for creating experience (request from user)
+class ExperienceCreateRequest(ExperienceBase):
+    name: str
+    type: str
+    price: float
+
+# Schema for creating experience (with additional fields)
+class ExperienceCreate(ExperienceCreateRequest):
+    tenant_id: int
+    created_by: int
+
+# Schema for updating experience (request from user)
+class ExperienceUpdateRequest(ExperienceBase):
     pass
 
+# Schema for updating experience (with additional fields)
+class ExperienceUpdate(ExperienceUpdateRequest):
+    updated_by: Optional[int] = None
+
+# Schema for reading experience (response to user)
 class ExperienceRead(ExperienceBase):
     id: int
-    created_at: datetime.datetime
-    updated_at: datetime.datetime
+    tenant_id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    created_by: int
+    updated_by: Optional[int] = None
 
     class Config:
         from_attributes = True
-
-class ExperienceUpdate(ExperienceBase):
-    pass

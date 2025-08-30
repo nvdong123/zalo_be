@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.core.deps import get_db, get_current_admin_user, get_tenant_admin, verify_tenant_permission
 from app.crud.crud_rooms import room
-from app.schemas.rooms import RoomCreate, RoomRead, RoomUpdate
+from app.schemas.rooms import RoomCreate, RoomRead, RoomUpdate, RoomCreateRequest
 from app.models.models import TblAdminUsers
 
 router = APIRouter()
@@ -24,13 +24,19 @@ def read_rooms(
 def create_room(
     *,
     tenant_id: int,
-    obj_in: RoomCreate,
+    obj_in: RoomCreateRequest,
     db: Session = Depends(get_db),
     current_user: TblAdminUsers = Depends(get_tenant_admin)
 ):
     """Create new room"""
     verify_tenant_permission(tenant_id, current_user)
-    return room.create(db=db, obj_in=obj_in, tenant_id=tenant_id)
+    
+    # Convert RoomCreateRequest to RoomCreate with tenant_id
+    room_data = obj_in.dict()
+    room_data['tenant_id'] = tenant_id
+    room_create = RoomCreate(**room_data)
+    
+    return room.create(db=db, obj_in=room_create, tenant_id=tenant_id)
 
 @router.get("/rooms/{item_id}", response_model=RoomRead)
 def read_room(

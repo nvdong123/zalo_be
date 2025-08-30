@@ -9,8 +9,10 @@ import os
 from app.api.api_v1.endpoints import (
     auth, rooms, services, tenants, vouchers, 
     booking_requests, customer_vouchers, customers,
-    facilities, facility_features, games, hotel_brands, promotions, room_stays,
-    service_bookings, admin_users, room_amenities, room_features, experiences, test_items
+    facilities, facility_features, games, hotel_brands, promotions,
+    room_stays, service_bookings, admin_users, room_amenities, room_features, # experiences removed
+    test_items, dashboard, file_management, tenant_management, booking_management, 
+    customer_management, debug, profile
 )
 
 # Import database and models
@@ -19,10 +21,9 @@ from app.core.config import settings
 from app.models.models import Base
 
 # Import middleware
-from app.middleware.logging import RequestLoggingMiddleware
-from app.middleware.security import SecurityHeadersMiddleware
-from app.middleware.audit import AuditTrailMiddleware
-from app.middleware.performance import PerformanceMonitoringMiddleware
+from app.middleware.logging_safe import RequestLoggingMiddlewareSafe
+from app.middleware.security_safe import SecurityHeadersMiddlewareSafe
+from app.middleware.performance_safe import PerformanceMonitoringMiddlewareSafe
 
 # Import monitoring and error handling
 from app.core.monitoring import health_checker, metrics_collector
@@ -49,20 +50,21 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Add custom middleware (order matters - last added is executed first)
-app.add_middleware(PerformanceMonitoringMiddleware)
-app.add_middleware(AuditTrailMiddleware)
-app.add_middleware(SecurityHeadersMiddleware)
-app.add_middleware(RequestLoggingMiddleware)
-
-# CORS middleware
+# CORS middleware - ADD FIRST to avoid issues with preflight requests
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.BACKEND_CORS_ORIGINS if settings.BACKEND_CORS_ORIGINS else ["*"],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
+
+# Add custom middleware (order matters - last added is executed first)
+# Safe middleware that won't cause hanging
+app.add_middleware(RequestLoggingMiddlewareSafe)
+app.add_middleware(SecurityHeadersMiddlewareSafe)  
+app.add_middleware(PerformanceMonitoringMiddlewareSafe)
 
 # Global exception handler
 @app.exception_handler(Exception)
@@ -170,7 +172,14 @@ async def get_system_status():
     return system_monitor.get_system_status()
 
 # Include routers for the imported modules
+app.include_router(debug.router, prefix="/api/v1/debug", tags=["Debug - Simple Tests"])
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
+app.include_router(profile.router, prefix="/api/v1", tags=["Profile"])
+app.include_router(dashboard.router, prefix="/api/v1", tags=["Dashboard"])
+app.include_router(file_management.router, prefix="/api/v1", tags=["File Management"])
+app.include_router(tenant_management.router, prefix="/api/v1", tags=["Tenant Management"])
+app.include_router(booking_management.router, prefix="/api/v1", tags=["Booking Management"])
+app.include_router(customer_management.router, prefix="/api/v1", tags=["Customer Management"])
 app.include_router(admin_users.router, prefix="/api/v1", tags=["Admin Users"])
 app.include_router(rooms.router, prefix="/api/v1", tags=["Rooms"])
 app.include_router(room_amenities.router, prefix="/api/v1", tags=["Room Amenities"])
@@ -183,10 +192,10 @@ app.include_router(customer_vouchers.router, prefix="/api/v1", tags=["Customer V
 app.include_router(customers.router, prefix="/api/v1", tags=["Customers"])
 app.include_router(facilities.router, prefix="/api/v1", tags=["Facilities"])
 app.include_router(facility_features.router, prefix="/api/v1", tags=["Facility Features"])
-app.include_router(experiences.router, prefix="/api/v1", tags=["Experiences"])
+# app.include_router(experiences.router, prefix="/api/v1", tags=["Experiences"])  # Removed - no table in DB
 app.include_router(games.router, prefix="/api/v1", tags=["Games"])
 app.include_router(hotel_brands.router, prefix="/api/v1", tags=["Hotel Brands"])
-app.include_router(promotions.router, prefix="/api/v1", tags=["Promotions"]) 
+app.include_router(promotions.router, prefix="/api/v1", tags=["Promotions"])
 app.include_router(room_stays.router, prefix="/api/v1", tags=["Room Stays"])
 app.include_router(service_bookings.router, prefix="/api/v1", tags=["Service Bookings"])
 app.include_router(test_items.router, prefix="/api/v1/test-items", tags=["Test Items - Zalo"])

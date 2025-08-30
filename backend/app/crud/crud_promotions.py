@@ -8,17 +8,17 @@ from app.schemas.promotions import PromotionCreate, PromotionUpdate
 
 
 class CRUDPromotion(CRUDBase[TblPromotions, PromotionCreate, PromotionUpdate]):
-    def get_by_code(
+    def get_by_title(
         self, 
         db: Session, 
         *, 
-        promotion_code: str,
+        title: str,
         tenant_id: int
     ) -> Optional[TblPromotions]:
-        """Get promotion by code"""
+        """Get promotion by title"""
         return db.query(TblPromotions).filter(
             and_(
-                TblPromotions.promotion_code == promotion_code,
+                TblPromotions.title == title,
                 TblPromotions.tenant_id == tenant_id,
                 TblPromotions.deleted == 0
             )
@@ -35,25 +35,25 @@ class CRUDPromotion(CRUDBase[TblPromotions, PromotionCreate, PromotionUpdate]):
         """Get active promotions"""
         return db.query(TblPromotions).filter(
             and_(
-                TblPromotions.is_active == True,
+                TblPromotions.status == 'active',
                 TblPromotions.tenant_id == tenant_id,
                 TblPromotions.deleted == 0
             )
         ).offset(skip).limit(limit).all()
 
-    def get_by_type(
+    def get_by_status(
         self,
         db: Session,
         *,
-        promotion_type: str,
+        status: str,
         tenant_id: int,
         skip: int = 0,
         limit: int = 100
     ) -> List[TblPromotions]:
-        """Get promotions by type"""
+        """Get promotions by status"""
         return db.query(TblPromotions).filter(
             and_(
-                TblPromotions.promotion_type == promotion_type,
+                TblPromotions.status == status,
                 TblPromotions.tenant_id == tenant_id,
                 TblPromotions.deleted == 0
             )

@@ -1,28 +1,35 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Dict, Any
 import datetime
 
 class GameBase(BaseModel):
-    tenant_id: int
     game_name: Optional[str] = None
-    configurations: Optional[str] = None
-    status: Optional[str] = None
-    created_by: Optional[str] = None
-    updated_by: Optional[str] = None
-    deleted: Optional[int] = None
-    deleted_at: Optional[datetime.datetime] = None
-    deleted_by: Optional[str] = None
+    configurations: Optional[Dict[str, Any]] = None
+    status: Optional[str] = "active"
 
 class GameCreate(GameBase):
-    pass
+    game_name: str
+    tenant_id: int
+    created_by: Optional[str] = None
+
+class GameCreateRequest(GameBase):
+    """Request model without tenant_id (will be added by endpoint)"""
+    game_name: str
 
 class GameRead(GameBase):
     id: int
+    tenant_id: int
     created_at: datetime.datetime
     updated_at: datetime.datetime
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
 
     class Config:
         from_attributes = True
 
 class GameUpdate(GameBase):
+    updated_by: Optional[str] = None
+
+class GameUpdateRequest(GameBase):
+    """Request model for updates without tenant_id"""
     pass

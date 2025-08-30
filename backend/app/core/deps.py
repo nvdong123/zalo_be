@@ -11,7 +11,8 @@ from app.models.models import TblAdminUsers
 from app.crud.crud_admin_users import crud_admin_user
 
 oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl=f"{settings.API_V1_STR}/auth/login"
+    tokenUrl="/api/v1/auth/login",
+    auto_error=False  # Don't auto-raise errors for debugging
 )
 
 
@@ -28,6 +29,10 @@ def get_current_admin_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     
+    # Handle case when no token is provided
+    if not token:
+        raise credentials_exception
+    
     try:
         # Decode JWT token
         payload = jwt.decode(
@@ -38,15 +43,49 @@ def get_current_admin_user(
         user_id: str = payload.get("sub")
         if user_id is None:
             raise credentials_exception
-    except (JWTError, ValidationError):
+    except (JWTError, ValidationError) as e:
+        # Debug: print the actual error
+        print(f"JWT Error: {e}")
+        print(f"Token: {token[:50]}...")
+        print(f"Secret key exists: {bool(settings.SECRET_KEY)}")
+        print(f"Algorithm: {settings.ALGORITHM}")
         raise credentials_exception
     
     # Get admin user from database
-    admin_user = crud_admin_user.get(db, id=int(user_id))
+    admin_user = crud_admin_user.get_by_id(db, id=int(user_id))
     if admin_user is None:
         raise credentials_exception
     
     return admin_user
+
+
+def get_current_admin_user_optional(
+    db: Session = Depends(get_db), 
+    token: Optional[str] = Depends(oauth2_scheme)
+) -> Optional[TblAdminUsers]:
+    """
+    Get current admin user from JWT token (optional - doesn't raise error if no token)
+    """
+    if not token:
+        return None
+    
+    try:
+        # Decode JWT token
+        payload = jwt.decode(
+            token, 
+            settings.SECRET_KEY, 
+            algorithms=[settings.ALGORITHM]
+        )
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            return None
+            
+        # Get admin user from database
+        admin_user = crud_admin_user.get_by_id(db, id=int(user_id))
+        return admin_user
+        
+    except (JWTError, ValidationError):
+        return None
 
 
 def get_current_super_admin(

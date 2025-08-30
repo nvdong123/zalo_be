@@ -1,7 +1,7 @@
 import json
 import secrets
 from typing import Any, Dict, List, Optional, Union
-from pydantic import AnyHttpUrl, EmailStr, HttpUrl, field_validator, model_validator
+from pydantic import AnyHttpUrl, EmailStr, HttpUrl, validator
 from pydantic_settings import BaseSettings
 
 
@@ -37,25 +37,15 @@ class Settings(BaseSettings):
     MYSQL_DB: str = "bookingservicesiovn_zalominidb"
     DATABASE_URI: Optional[str] = None
 
-    @model_validator(mode="before")
-    @classmethod  
-    def assemble_db_connection(cls, values: Dict[str, Any]) -> Dict[str, Any]:
-        if values.get("DATABASE_URI"):
-            return values
-        
-        # Use local MySQL if enabled, otherwise use remote MySQL
-        if values.get("USE_LOCAL_DB", True):
-            # Local MySQL on VPS
-            mysql_uri = f"mysql+pymysql://{values.get('MYSQL_USER')}:{values.get('MYSQL_PASSWORD')}@localhost/{values.get('MYSQL_DB')}"
-            values["DATABASE_URI"] = mysql_uri
-            print(f"🔧 Using local MySQL database: localhost")
-        else:
-            # Remote MySQL (original config)
-            mysql_uri = f"mysql+pymysql://{values.get('MYSQL_USER')}:{values.get('MYSQL_PASSWORD')}@{values.get('MYSQL_SERVER')}/{values.get('MYSQL_DB')}"
-            values["DATABASE_URI"] = mysql_uri
-            print(f"🔧 Using remote MySQL database: {values.get('MYSQL_SERVER')}")
-        
-        return values
+    def model_post_init(self, __context) -> None:
+        """Initialize database URI after model creation"""
+        if not self.DATABASE_URI:
+            if self.USE_LOCAL_DB:
+                self.DATABASE_URI = f"mysql+pymysql://{self.MYSQL_USER}:{self.MYSQL_PASSWORD}@localhost/{self.MYSQL_DB}"
+                print(f"🔧 Using local MySQL database: localhost")
+            else:
+                self.DATABASE_URI = f"mysql+pymysql://{self.MYSQL_USER}:{self.MYSQL_PASSWORD}@{self.MYSQL_SERVER}/{self.MYSQL_DB}"
+                print(f"🔧 Using remote MySQL database: {self.MYSQL_SERVER}")
 
     # Email
     SMTP_TLS: bool = True

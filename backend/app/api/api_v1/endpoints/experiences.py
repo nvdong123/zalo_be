@@ -18,10 +18,10 @@ def read_experiences(
     current_user: TblAdminUsers = Depends(get_current_admin_user)
 ):
     """Get all experiences for a tenant, optionally filtered by type"""
-    verify_tenant_permission(current_user, tenant_id)
+    verify_tenant_permission(tenant_id, current_user)
     if type:
         return experience.get_by_type(db=db, type=type, tenant_id=tenant_id)
-    return experience.get_by_tenant(db=db, tenant_id=tenant_id, skip=skip, limit=limit)
+    return experience.get_multi(db=db, tenant_id=tenant_id, skip=skip, limit=limit)
 
 @router.post("/experiences", response_model=ExperienceRead)
 def create_experience(

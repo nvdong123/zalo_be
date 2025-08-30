@@ -11,7 +11,6 @@ class FacilityBase(BaseModel):
     video_url: Optional[str] = None
     vr360_url: Optional[str] = None
     gallery_url: Optional[str] = None
-    booking_url: Optional[str] = None
     created_by: Optional[str] = None
     updated_by: Optional[str] = None
     deleted: Optional[int] = None
@@ -20,6 +19,26 @@ class FacilityBase(BaseModel):
 
 class FacilityCreate(FacilityBase):
     pass
+
+class FacilityCreateRequest(BaseModel):
+    """Schema for facility creation request (without tenant_id)"""
+    facility_name: str
+    description: Optional[str] = None
+    type: Optional[str] = None
+    image_url: Optional[str] = None
+    video_url: Optional[str] = None
+    vr360_url: Optional[str] = None
+    gallery_url: Optional[str] = None
+
+class FacilityUpdateRequest(BaseModel):
+    """Schema for facility update request (without tenant_id)"""
+    facility_name: Optional[str] = None
+    description: Optional[str] = None
+    type: Optional[str] = None
+    image_url: Optional[str] = None
+    video_url: Optional[str] = None
+    vr360_url: Optional[str] = None
+    gallery_url: Optional[str] = None
 
 class FacilityRead(FacilityBase):
     id: int

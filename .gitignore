@@ -1,21 +1,172 @@
-# Ignore environment variables
+# ========================================
+# 🚫 PRODUCTION DEPLOYMENT .gitignore
+# ========================================
+# Prevents uploading sensitive/unnecessary files
+
+# ===== ENVIRONMENT & SECRETS =====
 .env
+.env.local
+.env.production
+.env.development
 backend/.env
+backend/app/.env
+fe/.env
 frontend/.env
 
-# Ignore node_modules
-node_modules
-frontend/node_modules
+# ===== PYTHON VIRTUAL ENVIRONMENTS =====
+venv/
+venv_py311/
+.venv/
+env/
+ENV/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+build/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# Ignore system files
+# ===== NODE.JS & FRONTEND =====
+node_modules/
+fe/node_modules/
+frontend/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+dist/
+dist-ssr/
+fe/dist/
+frontend/dist/
+.nuxt
+.next
+out/
+
+# ===== DATABASE FILES =====
+*.db
+*.sqlite
+*.sqlite3
+local_test.db
+database.db
+
+# ===== LOG FILES =====
+*.log
+logs/*.log
+backend/logs/*.log
+backend/app/logs/*.log
+
+# ===== BACKUP & TEMPORARY FILES =====
+*_backup.*
+*_old.*
+*_Real.*
+*_test.*
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+
+# ===== DEVELOPMENT FILES =====
+.vscode/settings.json
+.vscode/launch.json
+.idea/
+*.sublime-*
 .DS_Store
+Thumbs.db
+desktop.ini
 
-# Ignore distribution files
-dist
-dist-ssr
+# ===== UPLOAD & MEDIA FILES =====
+uploads/
+backend/uploads/
+uploads/*.jpg
+uploads/*.png
+uploads/*.gif
+uploads/*.pdf
+uploads/*.zip
+media/
 
-# Ignore local development files
-*.local
+# ===== CACHE & COMPILED FILES =====
+.cache/
+.parcel-cache/
+.sass-cache/
+*.css.map
+*.js.map
 
-# Ignore zip files
+# ===== TESTING & COVERAGE =====
+coverage/
+.coverage
+.pytest_cache/
+.tox/
+htmlcov/
+.coverage.*
+
+# ===== DEPLOYMENT ARTIFACTS =====
+*.tar.gz
 *.zip
+*.rar
+deploy_temp/
+release/
+
+# ===== SSL CERTIFICATES (keep scripts, not actual certs) =====
+*.pem
+*.key
+*.crt
+*.csr
+ssl_certs/
+
+# ===== DOCKER (if used) =====
+docker-compose.override.yml
+.dockerignore
+
+# ===== OS SPECIFIC =====
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+
+# ===== JUPYTER NOTEBOOKS =====
+.ipynb_checkpoints/
+*.ipynb
+
+# ===== KEEP THESE IMPORTANT FILES =====
+# (Use ! to force include)
+!ZaloMini App MySQL Script.sql
+!backend/deploy_all.sh
+!backend/setup_ssl_zalominiapp.sh
+!backend/health_check.sh
+!backend/nginx.conf
+!backend/requirements.txt
+!fe/package.json
+!fe/vite.config.ts
+!DEPLOYMENT_READY.md
+*.zip
+*.tgz
+

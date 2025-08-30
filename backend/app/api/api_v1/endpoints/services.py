@@ -1,9 +1,10 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.core.deps import get_db
+from app.core.deps import get_db, get_current_admin_user, verify_tenant_permission
 from app.crud.crud_services import service
-from app.schemas.services import ServiceCreate, ServiceRead, ServiceUpdate
+from app.schemas.services import ServiceCreate, ServiceRead, ServiceUpdate, ServiceCreateRequest, ServiceUpdateRequest
+from app.models.models import TblAdminUsers
 
 router = APIRouter()
 
@@ -12,30 +13,46 @@ def read_services(
     tenant_id: int,
     skip: int = 0,
     limit: int = 100,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: TblAdminUsers = Depends(get_current_admin_user)
 ):
     """Get all services for a tenant"""
+    verify_tenant_permission(tenant_id, current_user)
     return service.get_multi(db=db, tenant_id=tenant_id, skip=skip, limit=limit)
 
 @router.post("/services", response_model=ServiceRead)
 def create_service(
     *,
     tenant_id: int,
-    obj_in: ServiceCreate,
-    db: Session = Depends(get_db)
+    obj_in: ServiceCreateRequest,
+    db: Session = Depends(get_db),
+    current_user: TblAdminUsers = Depends(get_current_admin_user)
 ):
     """Create new service"""
-    return service.create(db=db, obj_in=obj_in, tenant_id=tenant_id)
+    verify_tenant_permission(tenant_id, current_user)
+    
+    # Convert ServiceCreateRequest to ServiceCreate with tenant_id
+    service_data = obj_in.dict()
+    service_data['tenant_id'] = tenant_id
+    service_data['created_by'] = current_user.username
+    service_create = ServiceCreate(**service_data)
+    
+    return service.create(db=db, obj_in=service_create, tenant_id=tenant_id)
 
 @router.get("/services/{item_id}", response_model=ServiceRead)
 def read_service(
     *,
     item_id: int,
     tenant_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: TblAdminUsers = Depends(get_current_admin_user)
 ):
     """Get service by ID"""
+    verify_tenant_permission(tenant_id, current_user)
     obj = service.get(db=db, id=item_id, tenant_id=tenant_id)
+    if not obj:
+        raise HTTPException(status_code=404, detail="Service not found")
+    return obj
     if not obj:
         raise HTTPException(status_code=404, detail="Service not found")
     return obj

@@ -1,0 +1,63 @@
+# ========================================
+# 🚀 DEPLOYMENT IGNORE FILE
+# ========================================
+# Files to exclude when deploying to VPS
+
+# ===== DEVELOPMENT ENVIRONMENTS =====
+venv_py311/
+.venv/
+venv/
+node_modules/
+fe/node_modules/
+
+# ===== LOCAL DEVELOPMENT FILES =====
+.vscode/
+.idea/
+*.local
+.env.local
+.env.development
+
+# ===== TEMPORARY & BACKUP FILES =====
+*_backup.*
+*_old.*
+*_Real.*
+*_test.*
+*.tmp
+*.bak
+cleanup_for_deploy.ps1
+
+# ===== DATABASE FILES (use server DB) =====
+*.db
+*.sqlite
+local_test.db
+
+# ===== LOG FILES (server will generate new ones) =====
+logs/*.log
+backend/logs/*.log
+
+# ===== MOCK DATA (using real API) =====
+fe/src/mock/
+
+# ===== CACHE & BUILD ARTIFACTS =====
+__pycache__/
+*.pyc
+.cache/
+dist/
+fe/dist/
+
+# ===== DOCUMENTATION & README (optional) =====
+DEPLOYMENT_READY.md
+README*.md
+
+# ===== UPLOAD DIRECTORIES (will be created on server) =====
+uploads/
+backend/uploads/tenant_*/
+
+# ===== SSL CERTIFICATES (will be generated on server) =====
+*.pem
+*.key
+*.crt
+
+# ===== GIT FILES =====
+.git/
+.gitignore

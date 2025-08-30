@@ -13,11 +13,11 @@ class RoomBase(BaseModel):
     capacity_children: Optional[int] = None
     size_m2: Optional[int] = None
     view_type: Optional[str] = None
-    has_balcony: Optional[int] = None
+    has_balcony: Optional[bool] = None
     image_url: Optional[str] = None
     video_url: Optional[str] = None
     vr360_url: Optional[str] = None
-    booking_url: Optional[str] = None
+    gallery_url: Optional[str] = None
     created_by: Optional[str] = None
     updated_by: Optional[str] = None
     deleted: Optional[int] = None
@@ -26,6 +26,22 @@ class RoomBase(BaseModel):
 
 class RoomCreate(RoomBase):
     pass
+
+class RoomCreateRequest(BaseModel):
+    """Schema for room creation request (without tenant_id)"""
+    room_type: str
+    room_name: str
+    description: Optional[str] = None
+    price: Optional[decimal.Decimal] = None
+    capacity_adults: Optional[int] = None
+    capacity_children: Optional[int] = None
+    size_m2: Optional[int] = None
+    view_type: Optional[str] = None
+    has_balcony: Optional[bool] = None
+    image_url: Optional[str] = None
+    video_url: Optional[str] = None
+    vr360_url: Optional[str] = None
+    gallery_url: Optional[str] = None
 
 class RoomRead(RoomBase):
     id: int

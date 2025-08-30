@@ -8,6 +8,37 @@ from app.schemas.test_items import TestItemCreate, TestItemUpdate, TestItemRead
 
 router = APIRouter()
 
+@router.get("/health")
+def test_health():
+    """
+    Simple health check - no database required
+    """
+    return {"status": "ok", "message": "Test items API is working"}
+
+@router.post("/simple-test")
+def simple_post_test(data: dict = None):
+    """
+    Simple POST test without database - to check if POST methods work
+    """
+    return {
+        "status": "success", 
+        "message": "POST method is working!",
+        "received_data": data,
+        "method": "POST"
+    }
+
+@router.put("/simple-test/{test_id}")  
+def simple_put_test(test_id: int, data: dict = None):
+    """
+    Simple PUT test without database
+    """
+    return {
+        "status": "success",
+        "message": f"PUT method is working for ID: {test_id}!",
+        "received_data": data,
+        "method": "PUT"
+    }
+
 @router.get("/", response_model=List[TestItemRead])
 def get_test_items(
     skip: int = Query(0, ge=0, description="Number of items to skip"),
@@ -19,15 +50,18 @@ def get_test_items(
     """
     Get test items for Zalo app - no authentication required
     """
-    if search:
-        items = crud_test_item.search_by_name(
-            db, name=search, skip=skip, limit=limit
-        )
-    else:
-        items = crud_test_item.get_multi_by_status(
-            db, status=status, skip=skip, limit=limit
-        )
-    return items
+    try:
+        if search:
+            items = crud_test_item.search_by_name(
+                db, name=search, skip=skip, limit=limit
+            )
+        else:
+            items = crud_test_item.get_multi_by_status(
+                db, status=status, skip=skip, limit=limit
+            )
+        return items
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 @router.get("/{item_id}", response_model=TestItemRead)
 def get_test_item(
@@ -51,8 +85,11 @@ def create_test_item(
     """
     Create a new test item
     """
-    item = crud_test_item.create(db=db, obj_in=item_in)
-    return item
+    try:
+        item = crud_test_item.create(db=db, obj_in=item_in)
+        return item
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 @router.put("/{item_id}", response_model=TestItemRead)
 def update_test_item(

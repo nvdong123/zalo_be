@@ -3,7 +3,7 @@ SQLAlchemy Models for Zalo Mini App Hotel Booking System
 Generated from MySQL schema with multi-tenant architecture
 """
 
-from sqlalchemy import Column, Integer, String, Text, DECIMAL, Boolean, DateTime, ForeignKey, Index, JSON
+from sqlalchemy import Column, Integer, String, Text, DECIMAL, Boolean, DateTime, Date, ForeignKey, Index, JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -58,7 +58,7 @@ class TblRooms(Base):
     image_url = Column(String(255))
     video_url = Column(String(255))
     vr360_url = Column(String(255))
-    booking_url = Column(String(255))
+    gallery_url = Column(String(255))
     created_at = Column(DateTime, nullable=False, default=func.current_timestamp())
     updated_at = Column(DateTime, nullable=False, default=func.current_timestamp(), onupdate=func.current_timestamp())
     created_by = Column(String(50))
@@ -209,10 +209,12 @@ class TblServices(Base):
     tenant_id = Column(Integer, nullable=False, index=True)
     service_name = Column(String(255), nullable=False)
     description = Column(Text)
+    type = Column(String(50))
+    image_url = Column(String(255))
     price = Column(DECIMAL(10, 2))
-    category = Column(String(100))
+    unit = Column(String(50))
     duration_minutes = Column(Integer)
-    is_active = Column(Boolean, default=True)
+    requires_schedule = Column(Boolean, default=True)
     created_at = Column(DateTime, nullable=False, default=func.current_timestamp())
     updated_at = Column(DateTime, nullable=False, default=func.current_timestamp(), onupdate=func.current_timestamp())
     created_by = Column(String(50))
@@ -245,17 +247,15 @@ class TblVouchers(Base):
     
     id = Column(Integer, primary_key=True, autoincrement=True)
     tenant_id = Column(Integer, nullable=False, index=True)
-    voucher_code = Column(String(50), unique=True, nullable=False)
-    voucher_name = Column(String(255))
-    description = Column(Text)
-    discount_type = Column(String(20))  # percentage, fixed_amount
+    promotion_id = Column(Integer)
+    code = Column(String(100), unique=True)
+    discount_type = Column(String(20))  # percentage | fixed
     discount_value = Column(DECIMAL(10, 2))
-    min_order_value = Column(DECIMAL(10, 2))
     max_usage = Column(Integer)
-    current_usage = Column(Integer, default=0)
-    valid_from = Column(DateTime)
-    valid_to = Column(DateTime)
-    is_active = Column(Boolean, default=True)
+    used_count = Column(Integer, default=0)
+    start_date = Column(Date)
+    end_date = Column(Date)
+    status = Column(String(20), default='active')
     created_at = Column(DateTime, nullable=False, default=func.current_timestamp())
     updated_at = Column(DateTime, nullable=False, default=func.current_timestamp(), onupdate=func.current_timestamp())
     created_by = Column(String(50))
@@ -289,14 +289,12 @@ class TblPromotions(Base):
     
     id = Column(Integer, primary_key=True, autoincrement=True)
     tenant_id = Column(Integer, nullable=False, index=True)
-    promotion_name = Column(String(255), nullable=False)
+    title = Column(String(255))
     description = Column(Text)
-    promotion_type = Column(String(50))
-    discount_value = Column(DECIMAL(10, 2))
-    applicable_rooms = Column(Text)
-    valid_from = Column(DateTime)
-    valid_to = Column(DateTime)
-    is_active = Column(Boolean, default=True)
+    start_date = Column(Date)
+    end_date = Column(Date)
+    banner_image = Column(String(512))
+    status = Column(String(20), default='active')
     created_at = Column(DateTime, nullable=False, default=func.current_timestamp())
     updated_at = Column(DateTime, nullable=False, default=func.current_timestamp(), onupdate=func.current_timestamp())
     created_by = Column(String(50))
@@ -310,12 +308,9 @@ class TblGames(Base):
     
     id = Column(Integer, primary_key=True, autoincrement=True)
     tenant_id = Column(Integer, nullable=False, index=True)
-    game_name = Column(String(255), nullable=False)
-    description = Column(Text)
-    game_type = Column(String(50))
-    reward_type = Column(String(50))
-    reward_value = Column(DECIMAL(10, 2))
-    is_active = Column(Boolean, default=True)
+    game_name = Column(String(100))
+    configurations = Column(JSON)
+    status = Column(String(20), default='active')
     created_at = Column(DateTime, nullable=False, default=func.current_timestamp())
     updated_at = Column(DateTime, nullable=False, default=func.current_timestamp(), onupdate=func.current_timestamp())
     created_by = Column(String(50))
@@ -339,25 +334,6 @@ class TblRoomStays(Base):
     status = Column(String(20), default='reserved')
     total_amount = Column(DECIMAL(12, 2))
     payment_status = Column(String(20), default='pending')
-    created_at = Column(DateTime, nullable=False, default=func.current_timestamp())
-    updated_at = Column(DateTime, nullable=False, default=func.current_timestamp(), onupdate=func.current_timestamp())
-    created_by = Column(String(50))
-    updated_by = Column(String(50))
-    deleted = Column(Integer, default=0)
-    deleted_at = Column(DateTime, default=None)
-    deleted_by = Column(String(50), default=None)
-
-class TblExperiences(Base):
-    __tablename__ = 'tbl_experiences'
-    
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    tenant_id = Column(Integer, nullable=False, index=True)
-    type = Column(String(100), nullable=False)
-    images = Column(JSON)  # Array of image URLs
-    title = Column(String(255))
-    description = Column(JSON)  # Array of description strings
-    vr360_url = Column(String(500))
-    video_url = Column(String(500))
     created_at = Column(DateTime, nullable=False, default=func.current_timestamp())
     updated_at = Column(DateTime, nullable=False, default=func.current_timestamp(), onupdate=func.current_timestamp())
     created_by = Column(String(50))

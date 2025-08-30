@@ -1,5 +1,6 @@
 from typing import Optional
 from pydantic import BaseModel
+from datetime import datetime
 
 # Base schema for TestItem
 class TestItemBase(BaseModel):
@@ -24,8 +25,11 @@ class TestItemUpdate(BaseModel):
 # Schema for reading a TestItem (response)
 class TestItemRead(TestItemBase):
     id: int
-    created_at: str
-    updated_at: str
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         from_attributes = True
+        json_encoders = {
+            datetime: lambda dt: dt.isoformat() if dt else None
+        }
