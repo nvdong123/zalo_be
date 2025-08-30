@@ -21,9 +21,17 @@ class SecurityHeadersMiddlewareSafe(BaseHTTPMiddleware):
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         
-        # Simple CSP for docs compatibility
+        # Enhanced CSP for docs compatibility
         if request.url.path in ["/docs", "/redoc", "/openapi.json"]:
-            response.headers["Content-Security-Policy"] = "default-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net data:"
+            csp_docs = (
+                "default-src 'self'; "
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; "
+                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+                "img-src 'self' data: https://fastapi.tiangolo.com https://cdn.jsdelivr.net; "
+                "font-src 'self' https://cdn.jsdelivr.net; "
+                "connect-src 'self'"
+            )
+            response.headers["Content-Security-Policy"] = csp_docs
         else:
             response.headers["Content-Security-Policy"] = "default-src 'self'"
         
