@@ -46,8 +46,11 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    description="Hotel Management SaaS Backend API - Production Ready",
-    version="1.0.0"
+    description="Hotel Management SaaS Backend API",
+    version="1.0.0",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json"
 )
 
 # CORS middleware - ADD FIRST to avoid issues with preflight requests
