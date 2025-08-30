@@ -21,11 +21,16 @@ class SecurityHeadersMiddlewareSafe(BaseHTTPMiddleware):
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         
-        # Disable CSP for docs to avoid Swagger UI issues
-        if request.url.path in ["/docs", "/redoc", "/openapi.json"]:
-            # No CSP for docs pages - allows all external resources
-            pass
-        else:
-            response.headers["Content-Security-Policy"] = "default-src 'self'"
+        # Temporarily disable all CSP for debugging
+        # if request.url.path in ["/docs", "/redoc", "/openapi.json"]:
+        #     # No CSP for docs pages - allows all external resources
+        #     print(f"DEBUG: Docs page {request.url.path} - No CSP added")
+        #     pass
+        # else:
+        #     response.headers["Content-Security-Policy"] = "default-src 'self'"
+        #     print(f"DEBUG: Regular page {request.url.path} - CSP added")
+        
+        # No CSP at all for now
+        print(f"DEBUG: No CSP for {request.url.path}")
         
         return response
