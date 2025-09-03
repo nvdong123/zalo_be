@@ -12,9 +12,11 @@ import {
   useFacilitiesQuery, 
   useCreateFacilityMutation, 
   useUpdateFacilityMutation, 
-  useDeleteFacilityMutation 
+  useDeleteFacilityMutation,
+  FacilitiesQueryParams
 } from './hooks';
-import type { Facility, CreateFacilityRequest, FacilitiesQueryParams } from './hooks';
+import type { Facility } from '../../api/facilities.api';
+import type { CreateFacilityRequest } from './hooks';
 
 const { Title } = Typography;
 const { Search } = Input;
@@ -35,8 +37,8 @@ const facilityTypeColors = {
 
 const FacilitiesPage: React.FC = () => {
   const [queryParams, setQueryParams] = useState<FacilitiesQueryParams>({
-    page: 1,
-    size: 10,
+    skip: 0,
+    limit: 10,
   });
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingFacility, setEditingFacility] = useState<Facility | null>(null);
@@ -52,9 +54,9 @@ const FacilitiesPage: React.FC = () => {
   const handleTableChange = (pagination: any, filters: any) => {
     setQueryParams(prev => ({
       ...prev,
-      page: pagination.current,
-      size: pagination.pageSize,
-      type: filters.type?.[0],
+      skip: (pagination.current - 1) * pagination.pageSize,
+      limit: pagination.pageSize,
+      category: filters.category?.[0],
       is_available: filters.is_available?.[0],
     }));
   };
@@ -63,7 +65,7 @@ const FacilitiesPage: React.FC = () => {
   const handleSearch = (value: string) => {
     setQueryParams(prev => ({
       ...prev,
-      page: 1,
+      skip: 0,
       search: value || undefined,
     }));
   };
@@ -93,13 +95,13 @@ const FacilitiesPage: React.FC = () => {
       
       const facilityData: CreateFacilityRequest = {
         ...values,
-        price: values.is_chargeable ? values.price : undefined,
+        price_per_hour: values.booking_required ? values.price_per_hour : undefined,
       };
 
       if (editingFacility) {
         await updateFacilityMutation.mutateAsync({
           id: editingFacility.id,
-          data: facilityData,
+          ...facilityData,
         });
       } else {
         await createFacilityMutation.mutateAsync(facilityData);
@@ -125,22 +127,26 @@ const FacilitiesPage: React.FC = () => {
   const columns: ColumnsType<Facility> = [
     {
       title: 'Name',
-      dataIndex: 'name',
-      key: 'name',
+      dataIndex: 'facility_name',
+      key: 'facility_name',
       sorter: true,
     },
     {
       title: 'Type',
-      dataIndex: 'type',
-      key: 'type',
+      dataIndex: 'facility_type',
+      key: 'facility_type',
       filters: [
-        { text: 'Amenity', value: 'AMENITY' },
-        { text: 'Service', value: 'SERVICE' },
-        { text: 'Equipment', value: 'EQUIPMENT' },
+        { text: 'Spa', value: 'spa' },
+        { text: 'Gym', value: 'gym' },
+        { text: 'Pool', value: 'pool' },
+        { text: 'Restaurant', value: 'restaurant' },
+        { text: 'Conference', value: 'conference' },
+        { text: 'Parking', value: 'parking' },
+        { text: 'Other', value: 'other' },
       ],
-      render: (type: 'AMENITY' | 'SERVICE' | 'EQUIPMENT') => (
-        <Tag color={facilityTypeColors[type]} icon={facilityTypeIcons[type]}>
-          {type.charAt(0) + type.slice(1).toLowerCase()}
+      render: (facilityType: string) => (
+        <Tag color="blue">
+          {facilityType?.charAt(0).toUpperCase() + facilityType?.slice(1)}
         </Tag>
       ),
     },
@@ -155,10 +161,10 @@ const FacilitiesPage: React.FC = () => {
       title: 'Price',
       key: 'pricing',
       render: (_, record) => {
-        if (!record.is_chargeable) {
+        if (!record.booking_required) {
           return <Tag color="green">Free</Tag>;
         }
-        return record.price ? formatCurrency(record.price) : 'TBD';
+        return record.price_per_hour ? formatCurrency(record.price_per_hour) : 'TBD';
       },
     },
     {
@@ -246,13 +252,13 @@ const FacilitiesPage: React.FC = () => {
 
             <Table
               columns={columns}
-              dataSource={facilitiesData?.data || []}
+              dataSource={facilitiesData || []}
               rowKey="id"
               loading={isLoading}
               pagination={{
-                current: queryParams.page,
-                pageSize: queryParams.size,
-                total: facilitiesData?.total || 0,
+                current: Math.floor((queryParams.skip || 0) / (queryParams.limit || 10)) + 1,
+                pageSize: queryParams.limit || 10,
+                total: facilitiesData?.length || 0,
                 showSizeChanger: true,
                 showQuickJumper: true,
               }}

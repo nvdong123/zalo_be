@@ -8,16 +8,16 @@ Write-Host "🔧 Fixing CORS and Domain Issues for Production..." -ForegroundCol
 
 # Step 1: Upload updated config.py
 Write-Host "📤 Uploading updated config.py..." -ForegroundColor Yellow
-scp backend/app/core/config.py ${VpsUser}@${VpsIp}:/root/zalo_be/backend/app/core/config.py
+scp backend/app/core/config.py ${VpsUser}@${VpsIp}:/var/www/hotel-backend/app/core/config.py
 
 # Step 2: Upload updated nginx.conf
 Write-Host "📤 Uploading updated nginx.conf..." -ForegroundColor Yellow
-scp backend/nginx.conf ${VpsUser}@${VpsIp}:/root/zalo_be/backend/nginx.conf
+scp backend/nginx.conf ${VpsUser}@${VpsIp}:/var/www/hotel-backend/nginx.conf
 
 # Step 3: Restart services on VPS
 Write-Host "🔄 Restarting services on VPS..." -ForegroundColor Yellow
 ssh ${VpsUser}@${VpsIp} "
-cd /root/zalo_be/backend
+cd /var/www/hotel-backend
 echo '🔄 Restarting FastAPI service...'
 sudo systemctl restart fastapi-zalomini
 sleep 3

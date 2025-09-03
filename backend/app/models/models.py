@@ -58,7 +58,7 @@ class TblRooms(Base):
     image_url = Column(String(255))
     video_url = Column(String(255))
     vr360_url = Column(String(255))
-    gallery_url = Column(String(255))
+    booking_url = Column(String(255))
     created_at = Column(DateTime, nullable=False, default=func.current_timestamp())
     updated_at = Column(DateTime, nullable=False, default=func.current_timestamp(), onupdate=func.current_timestamp())
     created_by = Column(String(50))

@@ -17,7 +17,7 @@ class RoomBase(BaseModel):
     image_url: Optional[str] = None
     video_url: Optional[str] = None
     vr360_url: Optional[str] = None
-    gallery_url: Optional[str] = None
+    booking_url: Optional[str] = None
     created_by: Optional[str] = None
     updated_by: Optional[str] = None
     deleted: Optional[int] = None
@@ -41,7 +41,7 @@ class RoomCreateRequest(BaseModel):
     image_url: Optional[str] = None
     video_url: Optional[str] = None
     vr360_url: Optional[str] = None
-    gallery_url: Optional[str] = None
+    booking_url: Optional[str] = None
 
 class RoomRead(RoomBase):
     id: int
