@@ -19,6 +19,14 @@ axiosInstance.interceptors.request.use(
         loading: true,
       }),
     );
+    
+    console.log('API Request:', {
+      method: config.method,
+      url: config.url,
+      baseURL: config.baseURL,
+      fullURL: `${config.baseURL}${config.url}`
+    });
+    
     // Attach Authorization header if token exists
     try {
       // Try to get token from authState first, then fallback to direct token
@@ -39,6 +47,29 @@ axiosInstance.interceptors.request.use(
         (config.headers as any)['Authorization'] = `Bearer ${token}`;
         console.log('Request interceptor - Authorization header set');
       }
+      
+      // Multi-tenant header injection
+      if (authState) {
+        const parsed = JSON.parse(authState);
+        const role = parsed.role;
+        let tenantId = null;
+        
+        if (role === 'SUPER_ADMIN') {
+          // Super admin uses selected tenant from tenant store (if implemented)
+          // For now, skip tenant header for super admin
+        } else if (role === 'HOTEL_ADMIN') {
+          // Hotel admin uses their own tenant ID
+          tenantId = parsed.tenantId;
+        }
+        
+        if (tenantId) {
+          config.headers = config.headers || {};
+          (config.headers as any)['X-Tenant-Id'] = tenantId.toString();
+          console.log('Added X-Tenant-Id header:', tenantId);
+        }
+      }
+      
+      console.log('Final request headers:', config.headers);
     } catch (e) {
       console.error('Request interceptor - Token error:', e);
     }
