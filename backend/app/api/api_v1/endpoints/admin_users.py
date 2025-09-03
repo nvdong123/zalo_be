@@ -9,7 +9,7 @@ from app.crud.crud_admin_users import crud_admin_user
 
 router = APIRouter()
 
-@router.get("/admin-users/", response_model=dict)
+@router.get("/admin-users", response_model=dict)
 def get_admin_users(
     db: Session = Depends(get_db),
     current_user: TblAdminUsers = Depends(get_current_admin_user),
@@ -85,7 +85,7 @@ def get_admin_users(
         "total": total
     }
 
-@router.post("/admin-users/", response_model=AdminUserResponse)
+@router.post("/admin-users", response_model=AdminUserResponse)
 def create_admin_user(
     user_in: AdminUserCreate,
     db: Session = Depends(get_db),

@@ -26,7 +26,7 @@ from app.api.api_v1.endpoints import (
 api_router = APIRouter()
 
 # Include all endpoint routers
-api_router.include_router(admin_users.router, prefix="/admin-users", tags=["admin-users"])
+api_router.include_router(admin_users.router, tags=["admin-users"])
 api_router.include_router(profile.router, tags=["profile"])
 api_router.include_router(tenants.router, tags=["tenants"])
 api_router.include_router(rooms.router, tags=["rooms"])
