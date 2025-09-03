@@ -15,7 +15,7 @@ if (!(Test-Path "package.json")) {
 }
 
 # Build
-npm run build
+npm run build:prod
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "❌ Build failed!" -ForegroundColor Red
