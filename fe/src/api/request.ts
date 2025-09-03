@@ -8,7 +8,7 @@ import { setGlobalState } from '@/stores/global.store';
 // import { history } from '@/routes/history';
 
 const axiosInstance = axios.create({
-  baseURL: (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:8000',
+  baseURL: (import.meta.env.VITE_API_BASE_URL as string) || 'https://zalominiapp.vtlink.vn',
   timeout: 15000,
 });
 

@@ -14,6 +14,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { request } from '../../api/request';
 import { authStore } from '../../stores/authStore';
+import { getUploadUrl } from '../../config/api';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -422,7 +423,7 @@ const FacilityManagement: React.FC = () => {
                 <Space direction="vertical" style={{ width: '100%' }}>
                   <Upload
                     name="file"
-                    action="http://localhost:8000/api/v1/upload/image"
+                    action={getUploadUrl('/api/v1/upload/image')}
                     data={{ folder: 'facilities' }}
                     headers={{
                       'Authorization': `Bearer ${authStore.getToken()}`
@@ -430,7 +431,7 @@ const FacilityManagement: React.FC = () => {
                     showUploadList={false}
                     onChange={(info) => {
                       if (info.file.status === 'done' && info.file.response?.success) {
-                        const imageUrl = `http://localhost:8000${info.file.response.data.url}`;
+                        const imageUrl = `${getUploadUrl('')}${info.file.response.data.url}`;
                         form.setFieldsValue({ image_url: imageUrl });
                       }
                     }}

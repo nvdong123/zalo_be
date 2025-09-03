@@ -302,7 +302,7 @@ const HotelBrandManagement: React.FC<HotelBrandManagementProps> = ({ onCancel, o
       const file = fileList[0];
       if (file.status === 'done' && file.response?.success && file.response?.data?.url) {
         // Real upload API returns URL
-        const logoUrl = `http://localhost:8000${file.response.data.url}`;
+        const logoUrl = `https://zalominiapp.vtlink.vn${file.response.data.url}`;
         form.setFieldsValue({ logo_url: logoUrl });
         setBrandData(prev => prev ? { ...prev, logo_url: logoUrl } : null);
         message.success('Logo uploaded successfully');
@@ -615,7 +615,7 @@ const HotelBrandManagement: React.FC<HotelBrandManagementProps> = ({ onCancel, o
                 <div style={{ marginTop: 8 }}>
                   <Upload
                     name="file"
-                    action="http://localhost:8000/api/v1/upload/image"
+                    action="https://zalominiapp.vtlink.vn/api/v1/upload/image"
                     data={{ folder: 'brands' }}
                     headers={{
                       'Authorization': `Bearer ${authStore.getToken()}`

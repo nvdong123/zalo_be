@@ -607,7 +607,7 @@ const RoomManagement: React.FC = () => {
                 <Space direction="vertical" style={{ width: '100%' }}>
                   <Upload
                     name="file"
-                    action="http://localhost:8000/api/v1/upload/image"
+                    action="https://zalominiapp.vtlink.vn/api/v1/upload/image"
                     data={{ folder: 'rooms' }}
                     headers={{
                       'Authorization': `Bearer ${authStore.getToken()}`
@@ -615,7 +615,7 @@ const RoomManagement: React.FC = () => {
                     showUploadList={false}
                     onChange={(info) => {
                       if (info.file.status === 'done' && info.file.response?.success) {
-                        const imageUrl = `http://localhost:8000${info.file.response.data.url}`;
+                        const imageUrl = `https://zalominiapp.vtlink.vn${info.file.response.data.url}`;
                         form.setFieldsValue({ image_url: imageUrl });
                       }
                     }}
