@@ -32,7 +32,7 @@ interface Room {
   image_url: string;
   video_url: string;
   vr360_url: string;
-  gallery_url: string;
+  booking_url: string;
   created_at?: string;
   updated_at?: string;
   created_by?: string;
@@ -53,7 +53,7 @@ const RoomManagement: React.FC = () => {
   const [filterRoomType, setFilterRoomType] = useState<string>('');
   const [filterViewType, setFilterViewType] = useState<string>('');
   const [filterHasBalcony, setFilterHasBalcony] = useState<string>('');
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000000]);
 
   // Fetch rooms data
   const { data: roomsData, isLoading } = useQuery({
@@ -98,7 +98,7 @@ const RoomManagement: React.FC = () => {
     setFilterRoomType('');
     setFilterViewType('');
     setFilterHasBalcony('');
-    setPriceRange([0, 10000000]);
+    setPriceRange([0, 100000000]);
   };
   
   // Export filtered data to CSV
@@ -402,8 +402,8 @@ const RoomManagement: React.FC = () => {
               <Slider
                 range
                 min={0}
-                max={10000000}
-                step={100000}
+                max={100000000}
+                step={1000000}
                 value={priceRange}
                 onChange={setPriceRange}
                 tooltip={{
@@ -647,10 +647,10 @@ const RoomManagement: React.FC = () => {
           </Row>
 
           <Form.Item
-            label="Gallery URL (Album ảnh)"
-            name="gallery_url"
+            label="Booking URL (Liên kết đặt phòng)"
+            name="booking_url"
           >
-            <Input placeholder="URL album ảnh của phòng (tùy chọn)" />
+            <Input placeholder="URL để đặt phòng (tùy chọn)" />
           </Form.Item>
 
           <div style={{ textAlign: 'right', marginTop: 24 }}>
