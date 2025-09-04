@@ -16,16 +16,17 @@ class Settings(BaseSettings):
     
     # CORS Configuration
     BACKEND_CORS_ORIGINS: List[str] = [
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "http://localhost:8889",
-        "http://localhost:8000",
-        "https://zalominiapp.vtlink.vn",
-        "http://zalominiapp.vtlink.vn",
-        "https://157.10.199.22",
-        "http://157.10.199.22",
-        "http://157.10.199.22:8000",
-        "https://157.10.199.22:8000",
+        "*"
+        # "http://localhost:3000",
+        # "http://localhost:5173",
+        # "http://localhost:8889",
+        # "http://localhost:8000",
+        # "https://zalominiapp.vtlink.vn",
+        # "http://zalominiapp.vtlink.vn",
+        # "https://157.10.199.22",
+        # "http://157.10.199.22",
+        # "http://157.10.199.22:8000",
+        # "https://157.10.199.22:8000",
     ]
 
     PROJECT_NAME: str = "Zalo Mini App"
