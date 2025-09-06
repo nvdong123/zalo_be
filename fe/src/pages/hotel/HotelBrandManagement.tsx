@@ -75,8 +75,9 @@ interface HotelBrand {
   google_map_url?: string;
   tiktok_url?: string;
   zalo_oa_id?: string;
+  zalo_app_id?: string;
   copyright_text?: string;
-  banner_images?: string;
+  banner_images?: string; // This stores JSON string or text with URLs
   latitude?: number;
   longitude?: number;
 }
@@ -232,8 +233,19 @@ const HotelBrandManagement: React.FC<HotelBrandManagementProps> = ({ onCancel, o
     try {
       const response: any = await request('get', '/current');
       if (response && response.success && response.data && isMountedRef.current) {
-        setBrandData(response.data as HotelBrand);
-        form.setFieldsValue(response.data);
+        const brandData = response.data as HotelBrand;
+        
+        // Process banner_images for display (convert array to string)
+        const formData = { ...brandData };
+        if (formData.banner_images && Array.isArray(formData.banner_images)) {
+          formData.banner_images = formData.banner_images.join('\n');
+        }
+        
+        setBrandData(brandData); // Keep original data for save
+        form.setFieldsValue(formData); // Set processed data for form display
+        
+        console.log('Loaded brand data:', brandData);
+        console.log('Form data:', formData);
       }
     } catch (error) {
       console.error('Error fetching brand data:', error);
@@ -252,19 +264,40 @@ const HotelBrandManagement: React.FC<HotelBrandManagementProps> = ({ onCancel, o
     try {
       setSaving(true);
       const values = await form.validateFields();
-      const payload = { ...brandData, ...values };
+      
+      // Process banner_images - convert string to array for backend
+      const processedValues = { ...values };
+      if (processedValues.banner_images && typeof processedValues.banner_images === 'string') {
+        // Split by lines and filter out empty lines
+        const urls = processedValues.banner_images
+          .split('\n')
+          .map((url: string) => url.trim())
+          .filter((url: string) => url.length > 0);
+        processedValues.banner_images = urls; // Send as array to backend
+      }
+      
+      const payload = { ...brandData, ...processedValues };
+      
+      console.log('Form values:', values);
+      console.log('Processed values:', processedValues);
+      console.log('Brand data:', brandData);
+      console.log('Final payload:', payload);
       
       // Use the brand ID from current data for update
       if (brandData?.id) {
+        console.log('Updating brand with ID:', brandData.id);
         const response: any = await request('put', `/${brandData.id}`, payload);
+        console.log('Update response:', response);
         if (response && response.success && response.data && isMountedRef.current) {
           setBrandData(response.data as HotelBrand);
           message.success('Lưu thông tin thương hiệu thành công!');
           onSave?.(); // Call the callback
         }
       } else {
+        console.log('Creating new brand');
         // If no ID, create new brand
         const response: any = await request('post', '', payload);
+        console.log('Create response:', response);
         if (response && response.success && response.data && isMountedRef.current) {
           setBrandData(response.data as HotelBrand);
           message.success('Tạo thương hiệu mới thành công!');
@@ -654,29 +687,21 @@ const HotelBrandManagement: React.FC<HotelBrandManagementProps> = ({ onCancel, o
           <Col xs={24} lg={12}>
             <Card title="Banner & Slider" size="small">
               <div style={{ marginBottom: 16 }}>
-                <Text strong>Banner chính</Text>
-                <Form.Item name="banner_url" style={{ marginTop: 8 }}>
-                  <Input 
-                    placeholder="Nhập đường dẫn URL ảnh banner" 
-                    addonBefore="🖼️"
-                  />
-                </Form.Item>
-              </div>
-
-              <div>
-                <Text strong>Slider ảnh quảng cáo</Text>
-                <Form.Item name="slider_images_url" style={{ marginTop: 8 }}>
+                <Text strong>Banner chính & Slider ảnh</Text>
+                <Form.Item name="banner_images" style={{ marginTop: 8 }}>
                   <Input.TextArea 
-                    placeholder="Nhập các đường dẫn URL ảnh slider (mỗi URL một dòng)" 
-                    rows={4}
+                    placeholder="Nhập các đường dẫn URL ảnh banner/slider (mỗi URL một dòng)" 
+                    rows={6}
                   />
                 </Form.Item>
                 <div style={{ fontSize: '12px', color: '#666', marginTop: 4 }}>
-                  💡 Mỗi URL ảnh trên một dòng. Ví dụ:
+                  💡 Mỗi URL ảnh trên một dòng. Ảnh đầu tiên sẽ là banner chính, các ảnh sau là slider. Ví dụ:
                   <br />
-                  https://example.com/image1.jpg
+                  https://example.com/banner.jpg
                   <br />
-                  https://example.com/image2.jpg
+                  https://example.com/slider1.jpg
+                  <br />
+                  https://example.com/slider2.jpg
                 </div>
               </div>
             </Card>
@@ -807,6 +832,10 @@ const HotelBrandManagement: React.FC<HotelBrandManagementProps> = ({ onCancel, o
                 <Input size="large" placeholder="ID trang Zalo Official Account" />
               </Form.Item>
 
+              <Form.Item name="zalo_app_id" label="Zalo App ID">
+                <Input size="large" placeholder="ID ứng dụng Zalo Mini App" />
+              </Form.Item>
+
               <Form.Item name="google_map_url" label="Google Maps">
                 <Input size="large" placeholder="Link Google Maps vị trí khách sạn" />
               </Form.Item>
@@ -875,7 +904,15 @@ const HotelBrandManagement: React.FC<HotelBrandManagementProps> = ({ onCancel, o
         </Space>
       </div>
 
-      <Form form={form} layout="vertical" onFinish={handleSave}>
+      <Form 
+        form={form} 
+        layout="vertical" 
+        onFinish={handleSave}
+        onValuesChange={(changedValues, allValues) => {
+          // Đồng bộ tất cả form values với brandData state
+          setBrandData(prev => ({ ...prev, ...allValues }));
+        }}
+      >
         <Tabs activeKey={activeTab} onChange={setActiveTab} items={tabItems} />
       </Form>
 

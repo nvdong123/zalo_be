@@ -196,8 +196,9 @@ const ServicesPage: React.FC = () => {
 
   const handleOk = async () => {
     try {
+      console.log('Starting form validation...');
       const values = await form.validateFields();
-      console.log('Form values:', values);
+      console.log('Form validation successful, values:', values);
       console.log('Current tenantId for save:', tenantId);
       
       if (!tenantId) {
@@ -273,6 +274,18 @@ const ServicesPage: React.FC = () => {
       
     } catch (error: any) {
       console.error('Error saving service:', error);
+      
+      // Handle validation errors specifically
+      if (error.errorFields && error.errorFields.length > 0) {
+        const firstError = error.errorFields[0];
+        const fieldName = firstError.name ? firstError.name.join('.') : 'Unknown field';
+        const errorMessage = firstError.errors && firstError.errors.length > 0 
+          ? firstError.errors[0] 
+          : 'Validation error';
+        message.error(`${fieldName}: ${errorMessage}`);
+        return; // Don't close modal on validation error
+      }
+      
       message.error(error.message || 'Failed to save service');
     } finally {
       setLoading(false);
@@ -601,7 +614,20 @@ const ServicesPage: React.FC = () => {
               <Form.Item
                 name="price"
                 label="Giá (VND)"
-                rules={[{ type: 'number', min: 0, message: 'Giá phải là số dương!' }]}
+                rules={[
+                  { required: true, message: 'Vui lòng nhập giá!' },
+                  { 
+                    validator: (_, value) => {
+                      if (value === null || value === undefined) {
+                        return Promise.reject(new Error('Vui lòng nhập giá!'));
+                      }
+                      if (isNaN(Number(value)) || Number(value) < 0) {
+                        return Promise.reject(new Error('Giá phải là số dương!'));
+                      }
+                      return Promise.resolve();
+                    }
+                  }
+                ]}
               >
                 <InputNumber
                   style={{ width: '100%' }}
@@ -615,6 +641,16 @@ const ServicesPage: React.FC = () => {
               <Form.Item
                 name="duration_minutes"
                 label="Duration (minutes)"
+                rules={[
+                  { 
+                    validator: (_, value) => {
+                      if (value !== null && value !== undefined && (isNaN(Number(value)) || Number(value) < 0)) {
+                        return Promise.reject(new Error('Duration phải là số dương!'));
+                      }
+                      return Promise.resolve();
+                    }
+                  }
+                ]}
               >
                 <InputNumber
                   style={{ width: '100%' }}
