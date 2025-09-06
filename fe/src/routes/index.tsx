@@ -21,7 +21,7 @@ const HotelBrandsList = lazy(() => import(/* webpackChunkName: "hotel-brands"*/ 
 const FacilitiesList = lazy(() => import(/* webpackChunkName: "facilities"*/ '@/pages/business/facilities'));
 const CustomersList = lazy(() => import(/* webpackChunkName: "customers"*/ '@/pages/business/customers'));
 const VouchersList = lazy(() => import(/* webpackChunkName: "vouchers"*/ '@/pages/business/vouchers'));
-const ServicesList = lazy(() => import(/* webpackChunkName: "services"*/ '@/pages/business/services'));
+const ServicesList = lazy(() => import(/* webpackChunkName: "services"*/ '@/pages/service/ServiceManagementSimple'));
 const BookingRequestsList = lazy(() => import(/* webpackChunkName: "booking-requests"*/ '@/pages/business/booking-requests'));
 const RoomStaysList = lazy(() => import(/* webpackChunkName: "room-stays"*/ '@/pages/business/room-stays'));
 
@@ -34,6 +34,10 @@ const routeList: RouteObject[] = [
     path: '/',
     element: <WrapperRouteComponent element={<LayoutPage />} titleId="" auth />,
     children: [
+      {
+        path: 'services',
+        element: <WrapperRouteComponent element={<ServicesList />} titleId="Dịch vụ" auth />,
+      },
       {
         path: '',
         element: <Navigate to="dashboard" />,
@@ -67,10 +71,6 @@ const routeList: RouteObject[] = [
       {
         path: 'vouchers',
         element: <WrapperRouteComponent element={<VouchersList />} titleId="Phiếu giảm giá" auth />,
-      },
-      {
-        path: 'services',
-        element: <WrapperRouteComponent element={<ServicesList />} titleId="Dịch vụ" auth />,
       },
       {
         path: 'booking-requests',

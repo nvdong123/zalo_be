@@ -49,27 +49,57 @@ axiosInstance.interceptors.request.use(
       }
       
       // Multi-tenant header injection
+      let tenantId = null;
+      
+      // Try to get tenant ID from auth state first
       if (authState) {
         const parsed = JSON.parse(authState);
+        console.log('Request interceptor - Parsed auth state:', parsed);
         const role = parsed.role;
-        let tenantId = null;
         
-        if (role === 'SUPER_ADMIN') {
-          // Super admin uses selected tenant from tenant store (if implemented)
-          // For now, skip tenant header for super admin
-        } else if (role === 'HOTEL_ADMIN') {
+        if (role === 'SUPER_ADMIN' || role === 'super_admin') {
+          // Super admin can access any tenant - get from JWT or default to tenant_id from request
+          console.log('Super admin detected - will use JWT tenant_id');
+        } else if (role === 'HOTEL_ADMIN' || role === 'hotel_admin') {
           // Hotel admin uses their own tenant ID
-          tenantId = parsed.tenantId;
-        }
-        
-        if (tenantId) {
-          config.headers = config.headers || {};
-          (config.headers as any)['X-Tenant-Id'] = tenantId.toString();
-          console.log('Added X-Tenant-Id header:', tenantId);
+          tenantId = parsed.tenantId || parsed.tenant_id || (parsed.user && parsed.user.tenant_id);
+          console.log('Hotel admin tenant ID lookup:', {
+            tenantId: parsed.tenantId,
+            tenant_id: parsed.tenant_id,
+            user_tenant_id: parsed.user && parsed.user.tenant_id,
+            selected: tenantId
+          });
+        } else {
+          console.log('Unknown role:', role, '- will try to get tenant from JWT');
         }
       }
       
+      // If no tenant ID from auth state, try to decode JWT token
+      if (!tenantId && token) {
+        try {
+          const tokenParts = token.split('.');
+          if (tokenParts.length === 3) {
+            const payload = JSON.parse(atob(tokenParts[1]));
+            console.log('JWT payload:', payload);
+            tenantId = payload.tenant_id;
+            console.log('Tenant ID from JWT:', tenantId);
+          }
+        } catch (e) {
+          console.error('Failed to decode JWT:', e);
+        }
+      }
+      
+      if (tenantId) {
+        config.headers = config.headers || {};
+        (config.headers as any)['X-Tenant-Id'] = tenantId.toString();
+        console.log('Added X-Tenant-Id header:', tenantId);
+      } else {
+        console.warn('No tenant ID found - request may fail');
+      }
+      
       console.log('Final request headers:', config.headers);
+      console.log('Request URL:', (config.baseURL || '') + (config.url || ''));
+      console.log('Request params:', config.params);
     } catch (e) {
       console.error('Request interceptor - Token error:', e);
     }

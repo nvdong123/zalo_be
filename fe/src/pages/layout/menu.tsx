@@ -4,10 +4,24 @@ import type { FC } from 'react';
 import { Menu } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import {
+  DashboardOutlined,
+  ShopOutlined,
+  HomeOutlined,
+  ToolOutlined,
+  CustomerServiceOutlined,
+  GiftOutlined,
+  TrophyOutlined,
+  TagOutlined,
+  UserOutlined,
+  CalendarOutlined,
+  CrownOutlined,
+  SettingOutlined,
+  FileTextOutlined,
+  TeamOutlined
+} from '@ant-design/icons';
 
 import { setUserItem } from '@/stores/user.store';
-
-import { CustomIcon } from './customIcon';
 
 interface MenuProps {
   menuList: MenuList;
@@ -23,10 +37,44 @@ const MenuComponent: FC<MenuProps> = props => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  const getIconByType = (iconType: string) => {
+    console.log('🚀 Getting icon for type:', iconType);
+    switch (iconType) {
+      case 'dashboard':
+        return <DashboardOutlined />;
+      case 'shop':
+        return <ShopOutlined />;
+      case 'home':
+        return <HomeOutlined />;
+      case 'tool':
+        return <ToolOutlined />;
+      case 'service':
+        return <CustomerServiceOutlined />;
+      case 'gift':
+        return <GiftOutlined />;
+      case 'trophy':
+        return <TrophyOutlined />;
+      case 'tag':
+        return <TagOutlined />;
+      case 'user':
+        return <UserOutlined />;
+      case 'calendar':
+        return <CalendarOutlined />;
+      case 'crown':
+        return <CrownOutlined />;
+      case 'setting':
+        return <SettingOutlined />;
+      case 'team':
+        return <TeamOutlined />;
+      default:
+        return <FileTextOutlined />;
+    }
+  };
+
   const getTitle = (menu: MenuList[0]) => {
     return (
       <span style={{ display: 'flex', alignItems: 'center' }}>
-        <CustomIcon type={menu.icon!} />
+        {getIconByType(menu.icon!)}
         <span>{menu.label[locale]}</span>
       </span>
     );

@@ -32,6 +32,7 @@ const BrandManagement = React.lazy(() => import('../pages/hotel/BrandManagement'
 const RoomManagement = React.lazy(() => import('../pages/hotel/RoomManagement'));
 const FacilityManagement = React.lazy(() => import('../pages/hotel/FacilityManagement'));
 const PromotionManagement = React.lazy(() => import('../pages/hotel/PromotionManagement'));
+const ServiceManagement = React.lazy(() => import('../pages/business/services'));
 const GameManagement = React.lazy(() => import('../pages/hotel/GameManagement'));
 const CustomerAnalytics = React.lazy(() => import('../pages/hotel/CustomerAnalytics'));
 const BookingManagement = React.lazy(() => import('../pages/hotel/BookingManagement'));
@@ -67,6 +68,12 @@ export const routes: RouteConfig[] = [
     path: '/facilities',
     element: FacilityManagement,
     title: 'Tiện ích & Dịch vụ',
+    roles: ['HOTEL_ADMIN'],
+  },
+  {
+    path: '/services',
+    element: ServiceManagement,
+    title: 'Quản lý Dịch vụ',
     roles: ['HOTEL_ADMIN'],
   },
   {

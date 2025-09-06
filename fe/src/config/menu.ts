@@ -106,6 +106,16 @@ export const getHotelMenuList = (): MenuList => {
         path: '/facilities',
       },
       {
+        code: 'services',
+        label: {
+          zh_CN: '服务管理',
+          en_US: 'Services',
+          vi_VN: 'Dịch vụ',
+        },
+        icon: 'service',
+        path: '/services',
+      },
+      {
         code: 'promotions',
         label: {
           zh_CN: '促销管理',

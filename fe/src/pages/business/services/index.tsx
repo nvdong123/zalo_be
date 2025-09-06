@@ -1,80 +1,276 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Modal, Form, Input, Select, InputNumber, Switch, Tag, message, Space, Popconfirm } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Table, Button, Modal, Form, Input, Select, InputNumber, Switch, message, Space, Popconfirm, Tag, Card, Row, Col, Statistic } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, FilterOutlined, ReloadOutlined } from '@ant-design/icons';
 import { getServices, createService, updateService, deleteService, Service, ServiceCreate, ServiceUpdate } from '../../../api/service.api';
-import { useTenantScope } from '../../../hooks/useTenantScope';
+import { authStore } from '../../../stores/authStore';
 
 const { Option } = Select;
+const { Search } = Input;
 
 const ServicesPage: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
+  const [filteredServices, setFilteredServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [form] = Form.useForm();
-  const { tenantId } = useTenantScope();
 
-  const serviceCategories = [
+  // Get tenant ID directly from auth store
+  const tenantId = authStore.getTenantId();
+
+  // Filter and search states
+  const [searchText, setSearchText] = useState('');
+  const [filterType, setFilterType] = useState<string>('all');
+  const [filterSchedule, setFilterSchedule] = useState<string>('all');
+  const [priceRange, setPriceRange] = useState<string>('all');
+
+  const serviceTypes = [
     { value: 'spa', label: 'Spa & Wellness' },
-    { value: 'food_beverage', label: 'Food & Beverage' },
-    { value: 'laundry', label: 'Laundry' },
-    { value: 'room_service', label: 'Room Service' },
+    { value: 'fitness', label: 'Fitness' },
+    { value: 'restaurant', label: 'Restaurant' },
     { value: 'transportation', label: 'Transportation' },
-    { value: 'tour_guide', label: 'Tour Guide' },
+    { value: 'laundry', label: 'Laundry' },
+    { value: 'concierge', label: 'Concierge' },
     { value: 'entertainment', label: 'Entertainment' },
-    { value: 'business', label: 'Business Services' },
+    { value: 'business', label: 'Business Center' },
     { value: 'other', label: 'Other' },
   ];
 
   const fetchServices = async () => {
-    if (!tenantId) return;
+    if (!tenantId) {
+      console.log('No tenant ID, skipping fetch');
+      return;
+    }
+    console.log('Fetching services for tenant:', tenantId);
     setLoading(true);
     try {
       const res = await getServices(tenantId);
-      if (res.status && res.result) {
-        setServices(res.result);
-      } else {
-        setServices([]);
+      console.log('Services API response:', res);
+      
+      // Handle different response formats
+      let servicesData = [];
+      if (res && res.status && res.result) {
+        // Wrapped response
+        servicesData = res.result;
+      } else if (Array.isArray(res)) {
+        // Direct array response
+        servicesData = res;
+      } else if (res && (res as any).data && Array.isArray((res as any).data)) {
+        // Data wrapped in data property
+        servicesData = (res as any).data;
       }
+      
+      console.log('Processed services data:', servicesData);
+      setServices(servicesData);
+      setFilteredServices(servicesData);
     } catch (error) {
       console.error('Error fetching services:', error);
       message.error('Failed to fetch services');
       setServices([]);
+      setFilteredServices([]);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchServices();
+    console.log('Services component mounted');
+    console.log('Current tenantId:', tenantId);
+    console.log('Auth data:', authStore.getState());
+    console.log('Is Hotel Admin:', authStore.isHotelAdmin());
+    console.log('Is Super Admin:', authStore.isSuperAdmin());
+    console.log('LocalStorage authState:', localStorage.getItem('authState'));
+    
+    // If tenantId is null but we have token, try to extract from JWT
+    if (!tenantId && authStore.getToken()) {
+      console.log('Attempting to extract tenantId from JWT token...');
+      try {
+        const token = authStore.getToken();
+        if (token) {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          console.log('JWT payload:', payload);
+          if (payload.tenant_id) {
+            console.log('Found tenantId in JWT, updating auth store:', payload.tenant_id);
+            authStore.setAuthData({ tenantId: payload.tenant_id });
+          }
+        }
+      } catch (error) {
+        console.error('Failed to extract tenantId from JWT:', error);
+      }
+    }
+    
+    if (tenantId) {
+      fetchServices();
+    } else {
+      console.warn('No tenant ID available, cannot fetch services');
+    }
   }, [tenantId]);
+
+  // Apply filters and search
+  useEffect(() => {
+    let filtered = [...services];
+
+    // Text search
+    if (searchText) {
+      filtered = filtered.filter(service =>
+        service.service_name.toLowerCase().includes(searchText.toLowerCase()) ||
+        service.description?.toLowerCase().includes(searchText.toLowerCase()) ||
+        service.type?.toLowerCase().includes(searchText.toLowerCase())
+      );
+    }
+
+    // Type filter
+    if (filterType !== 'all') {
+      filtered = filtered.filter(service => service.type === filterType);
+    }
+
+    // Schedule filter
+    if (filterSchedule !== 'all') {
+      const requiresSchedule = filterSchedule === 'required';
+      filtered = filtered.filter(service => service.requires_schedule === requiresSchedule);
+    }
+
+    // Price range filter
+    if (priceRange !== 'all') {
+      filtered = filtered.filter(service => {
+        const price = service.price || 0;
+        switch (priceRange) {
+          case 'free':
+            return price === 0;
+          case 'low':
+            return price > 0 && price <= 500000;
+          case 'medium':
+            return price > 500000 && price <= 2000000;
+          case 'high':
+            return price > 2000000;
+          default:
+            return true;
+        }
+      });
+    }
+
+    setFilteredServices(filtered);
+  }, [services, searchText, filterType, filterSchedule, priceRange]);
+
+  const resetFilters = () => {
+    setSearchText('');
+    setFilterType('all');
+    setFilterSchedule('all');
+    setPriceRange('all');
+  };
+
+  // Test function to add mock data
+  const addMockData = () => {
+    const mockServices = [
+      {
+        id: 1,
+        tenant_id: 4,
+        service_name: "Airport Transfer",
+        description: "Comfortable airport pickup and drop-off service",
+        type: "transportation",
+        price: 50000,
+        unit: "trip",
+        duration_minutes: 60,
+        requires_schedule: true,
+        created_at: "2025-09-04T16:32:09",
+        updated_at: "2025-09-04T16:32:09"
+      },
+      {
+        id: 2,
+        tenant_id: 4,
+        service_name: "Spa Massage",
+        description: "Relaxing full-body massage",
+        type: "spa",
+        price: 800000,
+        unit: "session",
+        duration_minutes: 90,
+        requires_schedule: true,
+        created_at: "2025-09-04T16:32:09",
+        updated_at: "2025-09-04T16:32:09"
+      }
+    ];
+    setServices(mockServices);
+    setFilteredServices(mockServices);
+    console.log('Added mock data:', mockServices);
+  };
 
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
+      console.log('Form values:', values);
+      console.log('Current tenantId for save:', tenantId);
+      
+      if (!tenantId) {
+        message.error('No tenant ID available. Please login again.');
+        return;
+      }
+      
       setLoading(true);
       
       let response;
       if (editingService) {
-        response = await updateService(tenantId!, editingService.id, values as ServiceUpdate);
-        if (response.status) {
-          message.success('Service updated successfully');
-        } else {
-          throw new Error(response.message || 'Failed to update service');
-        }
+        console.log('Updating service:', editingService.id, values);
+        console.log('Service data before update:', JSON.stringify(values, null, 2));
+        
+        // Process data same as create
+        const serviceData = {
+          ...values,
+          price: Number(values.price),
+          duration_minutes: values.duration_minutes ? Number(values.duration_minutes) : undefined,
+          requires_schedule: values.requires_schedule !== undefined ? Boolean(values.requires_schedule) : true
+        };
+        
+        console.log('Processed update data:', JSON.stringify(serviceData, null, 2));
+        
+        response = await updateService(tenantId!, editingService.id, serviceData as ServiceUpdate);
+        console.log('Update response:', response);
+        console.log('Update response type:', typeof response);
+        
+        // For update, just assume success and refresh data
+        message.success('Service updated successfully');
+        setIsModalVisible(false);
+        setEditingService(null);
+        form.resetFields();
+        await fetchServices();
+        return; // Exit early for update
       } else {
-        response = await createService(tenantId!, values as ServiceCreate);
-        if (response.status) {
+        console.log('Creating service with tenant_id:', tenantId, values);
+        console.log('Form values before sending:', JSON.stringify(values, null, 2));
+        
+        // Validate required fields
+        if (!values.service_name || !values.price) {
+          throw new Error('Service name and price are required');
+        }
+        
+        // Ensure price is a number
+        const serviceData = {
+          ...values,
+          price: Number(values.price),
+          duration_minutes: values.duration_minutes ? Number(values.duration_minutes) : undefined,
+          requires_schedule: values.requires_schedule !== undefined ? Boolean(values.requires_schedule) : true
+        };
+        
+        console.log('Processed service data:', JSON.stringify(serviceData, null, 2));
+        
+        response = await createService(tenantId!, serviceData as ServiceCreate);
+        console.log('Create response:', response);
+        console.log('Response type:', typeof response);
+        console.log('Response status:', response?.status);
+        console.log('Response message:', response?.message);
+        
+        if (response && response.status) {
           message.success('Service created successfully');
+          setIsModalVisible(false);
+          setEditingService(null);
+          form.resetFields();
+          await fetchServices();
         } else {
-          throw new Error(response.message || 'Failed to create service');
+          const errorMsg = response?.message || 'Failed to create service';
+          console.error('Create service failed:', errorMsg);
+          throw new Error(errorMsg);
         }
       }
       
-      setIsModalVisible(false);
-      setEditingService(null);
-      form.resetFields();
-      fetchServices();
     } catch (error: any) {
       console.error('Error saving service:', error);
       message.error(error.message || 'Failed to save service');
@@ -90,6 +286,7 @@ const ServicesPage: React.FC = () => {
   };
 
   const handleAdd = () => {
+    console.log('Adding service, current tenantId:', tenantId);
     setEditingService(null);
     form.resetFields();
     setIsModalVisible(true);
@@ -101,69 +298,107 @@ const ServicesPage: React.FC = () => {
     setIsModalVisible(true);
   };
 
-  const handleDelete = async (serviceId: number) => {
+  const handleDelete = async (id: number) => {
+    if (!tenantId) return;
     try {
       setLoading(true);
-      const response = await deleteService(tenantId!, serviceId);
-      if (response.status) {
-        message.success('Service deleted successfully');
-        fetchServices();
-      } else {
-        throw new Error(response.message || 'Failed to delete service');
-      }
+      console.log('Deleting service:', id, 'with tenantId:', tenantId);
+      const response = await deleteService(tenantId, id);
+      console.log('Delete response:', response);
+      console.log('Delete response type:', typeof response);
+      
+      // For delete, we should always refresh data regardless of response
+      message.success('Service deleted successfully');
+      await fetchServices(); // Always refresh after delete
+      
     } catch (error: any) {
       console.error('Error deleting service:', error);
       message.error(error.message || 'Failed to delete service');
+      // Still try to refresh in case delete was successful on backend
+      fetchServices();
     } finally {
       setLoading(false);
     }
   };
 
   const columns = [
-    { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
-    { title: 'Service Name', dataIndex: 'service_name', key: 'service_name', width: 200 },
-    { title: 'Category', dataIndex: 'category', key: 'category', width: 120 },
-    { 
-      title: 'Price', 
-      dataIndex: 'price', 
-      key: 'price', 
-      width: 100,
-      render: (price: number) => price ? `$${price}` : '-'
-    },
-    { 
-      title: 'Duration', 
-      dataIndex: 'duration_minutes', 
-      key: 'duration_minutes', 
-      width: 100,
-      render: (minutes: number) => minutes ? `${minutes} min` : '-'
-    },
-    { title: 'Description', dataIndex: 'description', key: 'description', ellipsis: true },
-    { 
-      title: 'Status', 
-      dataIndex: 'is_active', 
-      key: 'is_active', 
-      width: 80,
-      render: (active: boolean) => (
-        <Tag color={active ? 'green' : 'red'}>
-          {active ? 'Active' : 'Inactive'}
-        </Tag>
-      )
+    {
+      title: 'Name',
+      dataIndex: 'service_name',
+      key: 'service_name',
     },
     {
-      title: 'Action',
-      key: 'action',
-      fixed: 'right' as const,
-      width: 150,
+      title: 'Type',
+      dataIndex: 'type',
+      key: 'type',
+      render: (type: string) => {
+        const typeOption = serviceTypes.find(t => t.value === type);
+        return <Tag color="blue">{typeOption?.label || type}</Tag>;
+      },
+    },
+    {
+      title: 'Description',
+      dataIndex: 'description',
+      key: 'description',
+      ellipsis: true,
+    },
+    {
+      title: 'Price',
+      dataIndex: 'price',
+      key: 'price',
+      render: (price: number) => {
+        if (!price || price === 0) return <span style={{ color: '#999' }}>Miễn phí</span>;
+        return (
+          <span style={{ color: '#52c41a', fontWeight: 'bold' }}>
+            {new Intl.NumberFormat('vi-VN', {
+              style: 'currency',
+              currency: 'VND'
+            }).format(price)}
+          </span>
+        );
+      },
+    },
+    {
+      title: 'Duration',
+      dataIndex: 'duration_minutes',
+      key: 'duration_minutes',
+      render: (duration: number) => duration ? `${duration} mins` : '-',
+    },
+    {
+      title: 'Schedule Required',
+      dataIndex: 'requires_schedule',
+      key: 'requires_schedule',
+      render: (required: boolean) => (
+        <Tag color={required ? 'orange' : 'green'}>
+          {required ? 'Required' : 'Not Required'}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
       render: (_: any, record: Service) => (
-        <Space size="middle">
-          <Button icon={<EditOutlined />} onClick={() => handleEdit(record)}>Edit</Button>
+        <Space>
+          <Button
+            type="link"
+            icon={<EditOutlined />}
+            onClick={() => handleEdit(record)}
+          >
+            Edit
+          </Button>
           <Popconfirm
-            title="Are you sure to delete this service?"
+            title="Are you sure you want to delete this service?"
             onConfirm={() => handleDelete(record.id)}
             okText="Yes"
             cancelText="No"
           >
-            <Button icon={<DeleteOutlined />} danger>Delete</Button>
+            <Button
+              type="link"
+              danger
+              icon={<DeleteOutlined />}
+            >
+              Delete
+            </Button>
           </Popconfirm>
         </Space>
       ),
@@ -172,22 +407,145 @@ const ServicesPage: React.FC = () => {
 
   return (
     <div>
-      <Button
-        type="primary"
-        icon={<PlusOutlined />}
-        onClick={handleAdd}
-        style={{ marginBottom: 16 }}
-      >
-        Add Service
-      </Button>
+      {/* Header */}
+      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h2>Services Management</h2>
+        <Space>
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={fetchServices}
+            loading={loading}
+            disabled={!tenantId}
+          >
+            Refresh (Tenant: {tenantId || 'None'})
+          </Button>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={handleAdd}
+          >
+            Add Service
+          </Button>
+        </Space>
+      </div>
+
+      {/* Statistics Cards */}
+      <Row gutter={16} style={{ marginBottom: 16 }}>
+        <Col span={6}>
+          <Card size="small">
+            <Statistic
+              title="Total Services"
+              value={services.length}
+              prefix={<SearchOutlined style={{ color: '#1890ff' }} />}
+            />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card size="small">                             
+            <Statistic
+              title="Filtered Results"
+              value={filteredServices.length}
+              prefix={<FilterOutlined style={{ color: '#52c41a' }} />}
+            />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card size="small">
+            <Statistic
+              title="Paid Services"
+              value={services.filter(s => s.price && s.price > 0).length}
+              prefix="$"
+              valueStyle={{ color: '#faad14' }}
+            />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card size="small">
+            <Statistic
+              title="Schedule Required"
+              value={services.filter(s => s.requires_schedule).length}
+              prefix="📅"
+              valueStyle={{ color: '#722ed1' }}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Search and Filters */}
+      <Card style={{ marginBottom: 16 }}>
+        <Row gutter={16} align="middle">
+          <Col span={8}>
+            <Search
+              placeholder="Search services..."
+              allowClear
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              prefix={<SearchOutlined />}
+            />
+          </Col>
+          <Col span={4}>
+            <Select
+              style={{ width: '100%' }}
+              placeholder="Filter by Type"
+              value={filterType}
+              onChange={setFilterType}
+            >
+              <Option value="all">All Types</Option>
+              {serviceTypes.map(type => (
+                <Option key={type.value} value={type.value}>
+                  {type.label}
+                </Option>
+              ))}
+            </Select>
+          </Col>
+          <Col span={4}>
+            <Select
+              style={{ width: '100%' }}
+              placeholder="Schedule"
+              value={filterSchedule}
+              onChange={setFilterSchedule}
+            >
+              <Option value="all">All</Option>
+              <Option value="required">Schedule Required</Option>
+              <Option value="not_required">No Schedule</Option>
+            </Select>
+          </Col>
+          <Col span={4}>
+            <Select
+              style={{ width: '100%' }}
+              placeholder="Price Range"
+              value={priceRange}
+              onChange={setPriceRange}
+            >
+              <Option value="all">All Prices</Option>
+              <Option value="free">Miễn phí</Option>
+              <Option value="low">10,000 - 500,000 VND</Option>
+              <Option value="medium">500,000 - 2,000,000 VND</Option>
+              <Option value="high">Trên 2,000,000 VND</Option>
+            </Select>
+          </Col>
+          <Col span={4}>
+            <Button onClick={resetFilters} icon={<FilterOutlined />}>
+              Reset Filters
+            </Button>
+          </Col>
+        </Row>
+      </Card>
+
       <Table
         columns={columns}
-        dataSource={services}
+        dataSource={filteredServices}
         rowKey="id"
         loading={loading}
-        bordered
-        scroll={{ x: 1200 }}
+        pagination={{
+          total: filteredServices.length,
+          pageSize: 10,
+          showSizeChanger: true,
+          showQuickJumper: true,
+          showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`,
+        }}
       />
+
       <Modal
         title={editingService ? 'Edit Service' : 'Add Service'}
         open={isModalVisible}
@@ -196,50 +554,104 @@ const ServicesPage: React.FC = () => {
         confirmLoading={loading}
         width={600}
       >
-        <Form form={form} layout="vertical" name="service_form">
-          <Form.Item
-            name="service_name"
-            label="Service Name"
-            rules={[{ required: true, message: 'Please input the service name!' }]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name="category"
-            label="Category"
-          >
-            <Select placeholder="Select service category">
-              {serviceCategories.map(category => (
-                <Option key={category.value} value={category.value}>{category.label}</Option>
-              ))}
-            </Select>
-          </Form.Item>
+        <Form
+          form={form}
+          layout="vertical"
+          initialValues={{
+            requires_schedule: false,
+            price: 0,
+          }}
+        >
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="service_name"
+                label="Service Name"
+                rules={[{ required: true, message: 'Please input service name!' }]}
+              >
+                <Input placeholder="Enter service name" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="type"
+                label="Service Type"
+                rules={[{ required: true, message: 'Please select service type!' }]}
+              >
+                <Select placeholder="Select service type">
+                  {serviceTypes.map(type => (
+                    <Option key={type.value} value={type.value}>
+                      {type.label}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+
           <Form.Item
             name="description"
             label="Description"
           >
-            <Input.TextArea rows={3} />
+            <Input.TextArea rows={3} placeholder="Enter service description" />
           </Form.Item>
-          <Form.Item
-            name="price"
-            label="Price ($)"
-          >
-            <InputNumber min={0} step={0.01} style={{ width: '100%' }} />
-          </Form.Item>
-          <Form.Item
-            name="duration_minutes"
-            label="Duration (minutes)"
-          >
-            <InputNumber min={0} style={{ width: '100%' }} />
-          </Form.Item>
-          <Form.Item
-            name="is_active"
-            label="Active"
-            valuePropName="checked"
-            initialValue={true}
-          >
-            <Switch />
-          </Form.Item>
+
+          <Row gutter={16}>
+            <Col span={8}>
+              <Form.Item
+                name="price"
+                label="Giá (VND)"
+                rules={[{ type: 'number', min: 0, message: 'Giá phải là số dương!' }]}
+              >
+                <InputNumber
+                  style={{ width: '100%' }}
+                  placeholder="Nhập giá (0 = miễn phí)"
+                  min={0}
+                  step={1000}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                name="duration_minutes"
+                label="Duration (minutes)"
+              >
+                <InputNumber
+                  style={{ width: '100%' }}
+                  placeholder="Duration in minutes"
+                  min={0}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                name="unit"
+                label="Unit"
+              >
+                <Input placeholder="e.g., per person, per hour" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="image_url"
+                label="Image URL"
+              >
+                <Input placeholder="Enter image URL (optional)" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="requires_schedule"
+                label="Requires Schedule"
+                valuePropName="checked"
+              >
+                <Switch checkedChildren="Yes" unCheckedChildren="No" />
+              </Form.Item>
+            </Col>
+          </Row>
         </Form>
       </Modal>
     </div>

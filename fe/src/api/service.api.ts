@@ -7,9 +7,11 @@ export interface Service {
   service_name: string;
   description?: string;
   price?: number;
-  category?: string;
+  type?: string;
+  image_url?: string;
+  unit?: string;
   duration_minutes?: number;
-  is_active: boolean;
+  requires_schedule?: boolean;
   created_at: string;
   updated_at: string;
   created_by?: string;
@@ -23,9 +25,11 @@ export interface ServiceCreate {
   service_name: string;
   description?: string;
   price?: number;
-  category?: string;
+  type?: string;
+  image_url?: string;
+  unit?: string;
   duration_minutes?: number;
-  is_active?: boolean;
+  requires_schedule?: boolean;
   created_by?: string;
   updated_by?: string;
 }
@@ -34,9 +38,11 @@ export interface ServiceUpdate {
   service_name?: string;
   description?: string;
   price?: number;
-  category?: string;
+  type?: string;
+  image_url?: string;
+  unit?: string;
   duration_minutes?: number;
-  is_active?: boolean;
+  requires_schedule?: boolean;
   updated_by?: string;
 }
 
@@ -45,8 +51,25 @@ export interface ServiceUpdate {
  * @param tenantId - The ID of the tenant.
  * @returns A list of services.
  */
-export const getServices = (tenantId: number) => {
-  return request<Service[]>('get', `/services`, { tenant_id: tenantId });
+export const getServices = async (tenantId: number) => {
+  try {
+    console.log('Calling getServices API with tenantId:', tenantId);
+    const response = await request<Service[]>('get', `/services?tenant_id=${tenantId}`);
+    console.log('getServices API response:', response);
+    
+    // Backend returns direct array, not wrapped in response object
+    if (Array.isArray(response)) {
+      return { status: true, result: response };
+    } else if (response && (response as any).data && Array.isArray((response as any).data)) {
+      return { status: true, result: (response as any).data };
+    } else {
+      console.error('Unexpected response format:', response);
+      return { status: false, result: [], message: 'Unexpected response format' };
+    }
+  } catch (error) {
+    console.error('getServices API error:', error);
+    throw error;
+  }
 };
 
 /**
@@ -55,11 +78,25 @@ export const getServices = (tenantId: number) => {
  * @param data - The data for the new service.
  * @returns The newly created service.
  */
-export const createService = (tenantId: number, data: ServiceCreate) => {
-  return request<Service>('post', `/services`, { 
-    tenant_id: tenantId,
-    ...data 
-  });
+export const createService = async (tenantId: number, data: ServiceCreate) => {
+  try {
+    console.log('Calling createService API with:', { tenantId, data });
+    const response = await request<Service>('post', `/services?tenant_id=${tenantId}`, data);
+    console.log('createService API response:', response);
+    
+    // Handle response format
+    if (response && (response as any).id) {
+      return { status: true, result: response as unknown as Service };
+    } else if (response && (response as any).data && (response as any).data.id) {
+      return { status: true, result: (response as any).data };
+    } else {
+      console.error('Unexpected create response format:', response);
+      return { status: false, result: null, message: 'Failed to create service' };
+    }
+  } catch (error) {
+    console.error('createService API error:', error);
+    throw error;
+  }
 };
 
 /**
@@ -80,10 +117,7 @@ export const getServiceById = (tenantId: number, serviceId: number) => {
  * @returns The updated service.
  */
 export const updateService = (tenantId: number, serviceId: number, data: ServiceUpdate) => {
-  return request<Service>('put', `/services/${serviceId}`, {
-    tenant_id: tenantId,
-    ...data
-  });
+  return request<Service>('put', `/services/${serviceId}?tenant_id=${tenantId}`, data);
 };
 
 /**
@@ -92,8 +126,5 @@ export const updateService = (tenantId: number, serviceId: number, data: Service
  * @param serviceId - The ID of the service to delete.
  */
 export const deleteService = (tenantId: number, serviceId: number) => {
-  return request('delete', `/services/${serviceId}`, { 
-    tenant_id: tenantId,
-    deleted_by: 'admin'
-  });
+  return request('delete', `/services/${serviceId}?tenant_id=${tenantId}`);
 };

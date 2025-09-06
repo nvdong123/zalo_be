@@ -206,10 +206,10 @@ const HotelBrandManagement: React.FC = () => {
   const fetchBrandData = async () => {
     setLoading(true);
     try {
-      const response = await request.get('/api/v1/hotel-brands/current');
-      if (response.data) {
-        setBrandData(response.data);
-        form.setFieldsValue(response.data);
+      const response = await request('get', '/api/v1/hotel-brands/current');
+      if (response.result) {
+        setBrandData(response.result);
+        form.setFieldsValue(response.result);
       }
     } catch (error) {
       console.error('Error fetching brand data:', error);
@@ -225,9 +225,9 @@ const HotelBrandManagement: React.FC = () => {
       const values = await form.validateFields();
       const payload = { ...brandData, ...values };
       
-      const response = await request.put('/api/v1/hotel-brands', payload);
-      if (response.data) {
-        setBrandData(response.data);
+      const response = await request('put', '/api/v1/hotel-brands', payload);
+      if (response.result) {
+        setBrandData(response.result);
         message.success('Lưu thông tin thương hiệu thành công!');
       }
     } catch (error) {
@@ -588,34 +588,29 @@ const HotelBrandManagement: React.FC = () => {
             <Card title="Banner & Slider" size="small">
               <div style={{ marginBottom: 16 }}>
                 <Text strong>Banner chính</Text>
-                <Upload
-                  name="banner"
-                  listType="picture-card"
-                  multiple
-                  showUploadList={{ showPreviewIcon: true, showRemoveIcon: true }}
-                  beforeUpload={beforeUpload}
-                >
-                  <div>
-                    <PlusOutlined />
-                    <div style={{ marginTop: 8 }}>Upload Banner</div>
-                  </div>
-                </Upload>
+                <Form.Item name="banner_url" style={{ marginTop: 8 }}>
+                  <Input 
+                    placeholder="Nhập đường dẫn URL ảnh banner" 
+                    addonBefore="🖼️"
+                  />
+                </Form.Item>
               </div>
 
               <div>
                 <Text strong>Slider ảnh quảng cáo</Text>
-                <Upload
-                  name="slider"
-                  listType="picture-card"
-                  multiple
-                  showUploadList={{ showPreviewIcon: true, showRemoveIcon: true }}
-                  beforeUpload={beforeUpload}
-                >
-                  <div>
-                    <PlusOutlined />
-                    <div style={{ marginTop: 8 }}>Upload Slider</div>
-                  </div>
-                </Upload>
+                <Form.Item name="slider_images_url" style={{ marginTop: 8 }}>
+                  <Input.TextArea 
+                    placeholder="Nhập các đường dẫn URL ảnh slider (mỗi URL một dòng)" 
+                    rows={4}
+                  />
+                </Form.Item>
+                <div style={{ fontSize: '12px', color: '#666', marginTop: 4 }}>
+                  💡 Mỗi URL ảnh trên một dòng. Ví dụ:
+                  <br />
+                  https://example.com/image1.jpg
+                  <br />
+                  https://example.com/image2.jpg
+                </div>
               </div>
             </Card>
           </Col>
