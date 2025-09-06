@@ -803,6 +803,10 @@ const HotelBrandManagement: React.FC<HotelBrandManagementProps> = ({ onCancel, o
               <Form.Item name="country" label="Quốc gia">
                 <Input size="large" placeholder="Việt Nam" defaultValue="Việt Nam" />
               </Form.Item>
+
+              <Form.Item name="copyright_text" label="Copyright">
+                <Input size="large" placeholder="© 2024 Hotel Name. All rights reserved." />
+              </Form.Item>
             </Card>
           </Col>
 
